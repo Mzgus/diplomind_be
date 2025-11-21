@@ -1,1 +1,1 @@
-# skill_be
+# diplomind_be
