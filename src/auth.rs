@@ -1,10 +1,58 @@
-//fn generate_access_token()
+use thiserror::Error;
+use sqlx::*;
+use crate::models::*;
+use crate::queries::*;
+
+#[derive(Error, Debug)]
+pub enum AuthError{
+    #[error("generation failed")]
+    GenerationFailed,
+    #[error("fetch failed")]
+    FetchFailed,
+}
+
+pub async fn generate_access_token<'e>(executor: impl sqlx::PgExecutor<'e>, user_auth_id: i32) -> Result<UserInfos, Error> {
+    let user_info = match get_user_sheet_and_email(executor, user_auth_id).await {
+        Ok(res) => res,
+        Err(err) => return Err(err)
+    };
+    Ok(user_info)
+    // TODO : créer le JWT à partir de user_info
+}
 // Un JWT contenant la user_sheet, enregistré dans le local storage
+
 
 //fn generate_refresh_token()
 // Chaine de caractère aléatoire cryptographique enregistré dans un cookie
+fn get_random_u128() -> Result<[u8; 32], getrandom::Error> {
+    let mut buf = [0u8; 32];
+    getrandom::fill(&mut buf)?;
+    Ok(buf)
+}
 
-//fn verify_access_token()
+pub async fn generate_refresh_token<'e>(user_auth_id: i32) -> Result<[u8; 32], AuthError> {
+    let token = match get_random_u128() {
+        Ok(res) => res,
+        Err(_) => {
+            return Err(AuthError::GenerationFailed);
+        }
+    };
+    // TODO : encoder le tableau en base64
+    
+    let _query_result = sqlx::query(
+        r#"
+        INSERT INTO "refresh_token" ("token", "id_user_auth")
+        VALUES ($1, $2)
+    "#,
+    )
+    .bind(token) 
+    .bind(user_auth_id);
+    
+    Ok(token)
+}
+
+
+
 // Récupère la variable enregistrée dans le local storage (le JWT) et verifie les informations contenues à l'intérieur
 // pour valider l'autohrisation de faire la commande
 

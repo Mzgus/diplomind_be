@@ -1,3 +1,4 @@
+use diplomind::auth;
 use diplomind::routes;
 
 use dotenv::dotenv;
