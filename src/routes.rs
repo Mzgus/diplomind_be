@@ -1,7 +1,4 @@
-use poem::{
-    Route, get
-};
-
+use poem::{Route, get};
 
 #[poem::handler]
 fn test() -> &'static str {
@@ -9,7 +6,5 @@ fn test() -> &'static str {
 }
 
 pub fn routes() -> Route {
-	Route::new()
-		.at("/", get(test))
-
+    Route::new().at("/", get(test))
 }
