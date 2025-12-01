@@ -2,6 +2,7 @@ use thiserror::Error;
 use sqlx::*;
 use crate::models::*;
 use crate::queries::*;
+use base64::prelude::*;
 
 #[derive(Error, Debug)]
 pub enum AuthError{
@@ -30,14 +31,15 @@ fn get_random_u128() -> Result<[u8; 32], getrandom::Error> {
     Ok(buf)
 }
 
-pub async fn generate_refresh_token<'e>(user_auth_id: i32) -> Result<[u8; 32], AuthError> {
-    let token = match get_random_u128() {
+pub async fn generate_refresh_token<'e>(user_auth_id: i32) -> Result<String, AuthError> {
+    let token_bytes = match get_random_u128() {
         Ok(res) => res,
         Err(_) => {
             return Err(AuthError::GenerationFailed);
         }
     };
-    // TODO : encoder le tableau en base64
+    
+    let token = BASE64_STANDARD.encode(token_bytes);
     
     let _query_result = sqlx::query(
         r#"
@@ -45,7 +47,7 @@ pub async fn generate_refresh_token<'e>(user_auth_id: i32) -> Result<[u8; 32], A
         VALUES ($1, $2)
     "#,
     )
-    .bind(token) 
+    .bind(&token) 
     .bind(user_auth_id);
     
     Ok(token)

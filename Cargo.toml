@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+base64 = "0.22.1"
 dotenv = "0.15.0"
 getrandom = "0.3.4"
 jsonwebtoken = { version = "10.2.0", features = ["rust_crypto"] }
