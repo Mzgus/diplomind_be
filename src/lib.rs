@@ -1,8 +1,10 @@
 mod routes;
 pub use routes::*;
-pub mod auth;
-pub use auth::*;
+pub mod handlers;
+pub use handlers::*;
 mod models;
 pub use models::*;
-mod queries;
-pub use queries::*;
+mod db;
+pub use db::*;
+mod errors;
+pub use errors::*;
