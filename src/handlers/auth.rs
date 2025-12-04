@@ -5,17 +5,40 @@ use chrono::prelude::*;
 use poem::web::{Data, Json};
 use sqlx::*;
 use base64::prelude::*;
+use jsonwebtoken::*;
+
+struct AuthentificationHandler {
+    secret: String,
+    // other variable needed for the authentification
+}
+
+impl AuthentificationHandler {
+    fn new(&self) -> AuthentificationHandler {
+        AuthentificationHandler { secret: std::env::var("JWT_SECRET").expect("Please set 'JWT_SECRET' in .env before retrying") }
+    }
+}
 
 pub async fn generate_access_token<'e>(
     executor: impl sqlx::PgExecutor<'e>,
     user_auth_id: i32,
-) -> Result<models::JWTClaims, errors::MyError> {
-    let user_info: models::JWTClaims = match db::get_access_token_claims(executor, user_auth_id).await {
+) -> Result<String, errors::MyError> {
+    let claims: models::JWTClaims = match db::get_access_token_claims(executor, user_auth_id).await {
         Ok(res) => res,
         Err(err) => return Err(err),
     };
-    
-    Ok(user_info)
+    let secret = std::env::var("JWT_SECRET").expect("eee"); // À modifier par la suite en mettant en place une structure contenant toutes les fonctions et avec une 
+    let encoded_token = match encode(
+        &Header::default(), 
+        &claims,    
+        &EncodingKey::from_secret(secret.as_ref())
+    ) {
+        Ok(res) => res,
+        Err(_) => {
+            return Err(errors::MyError::GenerationFailed);
+        }
+        
+    };
+    Ok(encoded_token)
     // TODO : créer le JWT à partir de user_info
 }
 // Un JWT contenant la user_sheet, enregistré dans le local storage
