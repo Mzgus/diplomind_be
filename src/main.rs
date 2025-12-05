@@ -1,18 +1,34 @@
-use diplomind::auth;
-use diplomind::routes;
-
+use diplomind::{MyError, handlers};
 use dotenv::dotenv;
-use poem::{EndpointExt, Server, listener::TcpListener};
+use poem::{EndpointExt, Server, listener::TcpListener, Route, get, middleware::CookieJarManager};
 use sqlx::PgPool;
 
 #[tokio::main]
 pub async fn main() -> Result<(), std::io::Error> {
     dotenv().ok();
-    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+    let db_url = match std::env::var("DATABASE_URL") {
+        Ok(res) => res,
+        Err(_) => return Err(std::io::Error::new(std::io::ErrorKind::Other, MyError::EnvVarNotSet { entity: "DATABASE_URL" }.to_string()))
+    };
+    let secret = match std::env::var("JWT_SECRET") {
+        Ok(res) => res,
+        Err(_) => return Err(std::io::Error::new(std::io::ErrorKind::Other, MyError::EnvVarNotSet { entity: "JWT_SECRET" }.to_string()))
+    };
+    let cookie_name = match std::env::var("COOKIE_NAME") {
+        Ok(res) => res,
+        Err(_) => return Err(std::io::Error::new(std::io::ErrorKind::Other, MyError::EnvVarNotSet { entity: "COOKIE_NAME" }.to_string()))
+    };
+    let token_manager = handlers::auth::TokenManager::new(secret, cookie_name);
     match PgPool::connect(&db_url).await {
         Ok(pool) => {
             println!("Database connection pool created successfully");
-            let routes = routes().data(pool);
+            // use handlers::*;
+            let routes = Route::new()
+                .at("/", get(test))
+                .data(pool)
+                .data(token_manager)
+                .with(CookieJarManager::new());
+            
             let _ = Server::new(TcpListener::bind("0.0.0.0:3000"))
                 .run(routes)
                 .await;
@@ -26,4 +42,9 @@ pub async fn main() -> Result<(), std::io::Error> {
             ));
         }
     }
+}
+
+#[poem::handler]
+fn test() -> &'static str {
+    "hello"
 }

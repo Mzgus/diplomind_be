@@ -2,15 +2,15 @@ use sqlx::types::chrono;
 
 
 #[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize)]
-pub struct LoginInfo {
+pub struct UserAuth {
     pub email: String,
     pub pwd: String,
 }
 
-// #[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize)]
-// pub struct LoginResponse {
-//     pub token: String,
-// }
+#[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize)]
+pub struct AccessToken {
+    pub token: String,
+}
 
 #[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize)]
 pub struct User {
@@ -20,6 +20,7 @@ pub struct User {
     pub user_role: String,
     pub user_profilepicture: String,
     pub user_email: String,
+    pub user_pwd: String,
 }
 
 #[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize)]

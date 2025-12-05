@@ -1,94 +1,139 @@
-use std::result;
-use crate::{models, errors, db};
+use crate::{models, errors, db, services};
 use chrono::DateTime;
+use chrono::Duration;
 use chrono::prelude::*;
-use poem::web::{Data, Json};
+use poem::Response;
+use poem::web::{Data, Json, cookie};
 use sqlx::*;
 use base64::prelude::*;
 use jsonwebtoken::*;
+use poem::http::header::{SET_COOKIE};
 
-struct AuthentificationHandler {
-    secret: String,
-    // other variable needed for the authentification
+#[derive(Clone)]
+pub struct TokenManager {
+    pub jwt_secret: String,
+    pub cookie_name: String,
 }
 
-impl AuthentificationHandler {
-    fn new(&self) -> AuthentificationHandler {
-        AuthentificationHandler { secret: std::env::var("JWT_SECRET").expect("Please set 'JWT_SECRET' in .env before retrying") }
+impl TokenManager {
+    pub fn new(jwt_secret: String, cookie_name: String) -> TokenManager
+ {
+     TokenManager
+     { jwt_secret, cookie_name }
+    }
+
+    fn generate_access_token(
+        &self,
+        claims: models::JWTClaims,
+    ) -> Result<String, errors::MyError> {
+        let encoded_token = match encode(
+            &Header::default(), 
+            &claims,    
+            &EncodingKey::from_secret(self.jwt_secret.as_ref())
+        ) {
+            Ok(res) => res,
+            Err(_) => {
+                return Err(errors::MyError::GenerationFailed { entity: "acces token" });
+            }    
+        };
+        Ok(encoded_token)
+    }
+
+    // Chaine de caractère aléatoire cryptographique enregistré dans un cookie
+    fn get_random_u128() -> Result<[u8; 32], getrandom::Error> {
+        let mut buf = [0u8; 32];
+        getrandom::fill(&mut buf)?;
+        Ok(buf)
+    }
+    
+    pub fn generate_expiration_date(&self, duration: chrono::Duration) -> DateTime<Utc> { 
+        let mut utc: DateTime<Utc> = Utc::now();
+        let validity_duration = duration; 
+        utc += validity_duration;
+        return utc
+    }
+
+    pub fn generate_refresh_token() -> Result<String, errors::MyError> {
+        let token_bytes: [u8; 32] = match TokenManager::get_random_u128() {
+            Ok(res) => res,
+            Err(_) => {
+                return Err(errors::MyError::GenerationFailed { entity: "refresh token" });
+            }
+        };
+        let token: String = BASE64_STANDARD.encode(token_bytes);
+        Ok(token)
+    }
+
+    pub fn verify_token_validity(date: DateTime<Utc>) -> bool {
+        date > Utc::now()
+    }
+
+    pub fn generate_token_pair(&self, claims: models::JWTClaims) -> Result<(String, String), errors::MyError> {
+        let access_token: String = match TokenManager::generate_access_token(self, claims) {
+            Ok(res) => res,
+            Err(err) => return Err(err)
+        };
+        let refresh_token: String = match TokenManager::generate_refresh_token() {
+            Ok(res) => res,
+            Err(err) => return Err(err)
+        };
+        Ok((access_token, refresh_token))
+    }
+
+    async fn create_cookie(&self, token: String) -> cookie::Cookie {
+        let cookie_name = &self.cookie_name;
+        let cookie_value = token;
+
+        let mut cookie = cookie::Cookie::new(cookie_name, cookie_value);
+
+        cookie.set_path("/refresh_tokens"); // Make the cookie available to all paths on the domain
+        cookie.set_http_only(true); // Prevent JavaScript access (good for security)
+        cookie.set_secure(true); // Only send over HTTPS (essential for production)
+        cookie.set_same_site(poem::web::cookie::SameSite::Lax); // Protection against CSRF
+    
+        let expiration_date = self.generate_expiration_date(chrono::Duration::weeks(1));
+        cookie.set_expires(expiration_date);
+    
+        cookie
+    }
+
+    async fn clear_cookie(&self) -> cookie::Cookie {
+        let cookie_name = &self.cookie_name;
+        
+
+        let mut cookie = cookie::Cookie::new(cookie_name, ""); // Value doesn't matter much for clearing
+        cookie.set_path("/refresh_tokens");
+        cookie.set_http_only(true);
+        cookie.set_secure(true);
+        cookie.set_same_site(poem::web::cookie::SameSite::Lax);
+        
+        // Set expiration to a past date
+        cookie.set_expires(Utc::now() - Duration::days(7)); // Expire 7 days ago
+        // Or set max_age to 0
+        // cookie.set_max_age(Duration::zero()); 
+        cookie
     }
 }
 
-pub async fn generate_access_token<'e>(
-    executor: impl sqlx::PgExecutor<'e>,
-    user_auth_id: i32,
-) -> Result<String, errors::MyError> {
-    let claims: models::JWTClaims = match db::get_access_token_claims(executor, user_auth_id).await {
+
+
+#[poem::handler]
+pub async fn login(Data(executor): Data<&Pool<Postgres>>, Data(token_manager): Data<&TokenManager>, Json(user_auth): Json<models::UserAuth>) -> Result<Json<models::AccessToken>, errors::MyError> {
+    let user_info: models::User = match db::auth::login(executor, user_auth.email).await {
         Ok(res) => res,
         Err(err) => return Err(err),
     };
-    let secret = std::env::var("JWT_SECRET").expect("eee"); // À modifier par la suite en mettant en place une structure contenant toutes les fonctions et avec une 
-    let encoded_token = match encode(
-        &Header::default(), 
-        &claims,    
-        &EncodingKey::from_secret(secret.as_ref())
-    ) {
-        Ok(res) => res,
-        Err(_) => {
-            return Err(errors::MyError::GenerationFailed);
-        }
-        
-    };
-    Ok(encoded_token)
-    // TODO : créer le JWT à partir de user_info
-}
-// Un JWT contenant la user_sheet, enregistré dans le local storage
 
-// pub async fn create_access_token<'e>(user_claims: Claims) {
-//     let secret = std::env::var("JWT_SECRET").expect("eeee"); // Est-ce que l'on a le droit de partir du principe que le JWT_SECRET est forcément défini ?
-//     let token = match encode(
-//         &Header::default(), 
-//         &user_claims, 
-//         &EncodingKey::from_secret(secret.as_ref())
-//     ) {
-//         Ok(res) => res,
-//         Err(err) => {
-//             return Err(AuthError::GenerationFailed);
-//         }
-        
-//     };
-// }
-
-// Chaine de caractère aléatoire cryptographique enregistré dans un cookie
-pub fn get_random_u128() -> Result<[u8; 32], getrandom::Error> {
-    let mut buf = [0u8; 32];
-    getrandom::fill(&mut buf)?;
-    Ok(buf)
-}
-
-pub fn generate_expiration_date(duration: chrono::Duration) -> DateTime<Utc> { 
-    let mut utc: DateTime<Utc> = Utc::now();
-    let validity_duration = duration; 
-    utc += validity_duration;
-    return utc
-}
-
-#[poem::handler]
-pub async fn create_refresh_token(Data(executor): Data<&Pool<Postgres>>,Json(refresh_token) : Json<models::RefreshToken>) -> Result<Json<models::RefreshToken>, errors::MyError> {
+    if user_info.user_pwd != user_auth.pwd {
+        return Err(errors::MyError::InvalidInput { input_type: "password" });
+    }
     
-    let token_bytes: [u8; 32] = match get_random_u128() {
+    let token: models::AccessToken = match services::auth::get_token_pair(token_manager.clone(), user_info) {
         Ok(res) => res,
-        Err(_) => {
-            return Err(errors::MyError::GenerationFailed);
-        }
+        Err(err) => return Err(err)
     };
     
-    let expiration_date = generate_expiration_date(chrono::Duration::weeks(1));
-    let token: String = BASE64_STANDARD.encode(token_bytes);
-    let result = match db::create_refresh_token(executor, user_auth_id, token, expiration_date).await {
-        Ok(result) => result,
-        Err(error) => return Err(error),
-    };
-    Ok(Json(result))
+    Ok(Json(token))   
 }
 
 
@@ -98,3 +143,4 @@ pub async fn create_refresh_token(Data(executor): Data<&Pool<Postgres>>,Json(ref
 //fn use_refresh_token()
 // Verifie le refresh token pour enclencher la création d'un nouveau access token et d'un noouveau refresh token à
 // donner au user
+

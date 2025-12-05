@@ -1,10 +1,10 @@
-mod routes;
-pub use routes::*;
+pub mod db;
+pub mod errors;
+pub mod models;
+pub mod services;
 pub mod handlers;
-pub use handlers::*;
-mod models;
-pub use models::*;
-mod db;
 pub use db::*;
-mod errors;
 pub use errors::*;
+pub use models::*;
+pub use services::*;
+pub use handlers::*;
