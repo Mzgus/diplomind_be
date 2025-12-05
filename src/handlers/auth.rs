@@ -3,6 +3,7 @@ use chrono::DateTime;
 use chrono::Duration;
 use chrono::prelude::*;
 use poem::Response;
+use poem::web::cookie::CookieJar;
 use poem::web::{Data, Json, cookie};
 use sqlx::*;
 use base64::prelude::*;
@@ -80,7 +81,7 @@ impl TokenManager {
         Ok((access_token, refresh_token))
     }
 
-    async fn create_cookie(&self, token: String) -> cookie::Cookie {
+    pub fn create_cookie(&self, token: String) -> cookie::Cookie {
         let cookie_name = &self.cookie_name;
         let cookie_value = token;
 
@@ -97,10 +98,9 @@ impl TokenManager {
         cookie
     }
 
-    async fn clear_cookie(&self) -> cookie::Cookie {
+    pub fn clear_cookie(&self, cookie_jar: &CookieJar) {
         let cookie_name = &self.cookie_name;
         
-
         let mut cookie = cookie::Cookie::new(cookie_name, ""); // Value doesn't matter much for clearing
         cookie.set_path("/refresh_tokens");
         cookie.set_http_only(true);
@@ -111,14 +111,14 @@ impl TokenManager {
         cookie.set_expires(Utc::now() - Duration::days(7)); // Expire 7 days ago
         // Or set max_age to 0
         // cookie.set_max_age(Duration::zero()); 
-        cookie
+        cookie_jar.add(cookie);
     }
 }
 
 
 
 #[poem::handler]
-pub async fn login(Data(executor): Data<&Pool<Postgres>>, Data(token_manager): Data<&TokenManager>, Json(user_auth): Json<models::UserAuth>) -> Result<Json<models::AccessToken>, errors::MyError> {
+pub async fn login(Data(executor): Data<&Pool<Postgres>>, Data(token_manager): Data<&TokenManager>, Json(user_auth): Json<models::UserAuth>, cookie_jar: &CookieJar) -> Result<Json<models::AccessToken>, errors::MyError> {
     let user_info: models::User = match db::auth::login(executor, user_auth.email).await {
         Ok(res) => res,
         Err(err) => return Err(err),
@@ -128,7 +128,7 @@ pub async fn login(Data(executor): Data<&Pool<Postgres>>, Data(token_manager): D
         return Err(errors::MyError::InvalidInput { input_type: "password" });
     }
     
-    let token: models::AccessToken = match services::auth::get_token_pair(token_manager.clone(), user_info) {
+    let token: models::AccessToken = match services::auth::get_token_pair(token_manager.clone(), user_info, cookie_jar) {
         Ok(res) => res,
         Err(err) => return Err(err)
     };
