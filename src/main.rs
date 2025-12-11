@@ -1,4 +1,4 @@
-use diplomind::{MyError, handlers};
+use diplomind::{MyError, handlers, services};
 use dotenv::dotenv;
 use poem::{EndpointExt, Server, listener::TcpListener, Route, get, middleware::CookieJarManager};
 use sqlx::PgPool;
@@ -18,7 +18,7 @@ pub async fn main() -> Result<(), std::io::Error> {
         Ok(res) => res,
         Err(_) => return Err(std::io::Error::new(std::io::ErrorKind::Other, MyError::EnvVarNotSet { entity: "COOKIE_NAME" }.to_string()))
     };
-    let token_manager = handlers::auth::TokenManager::new(secret, cookie_name);
+    let token_manager = services::auth::TokenManager::new(secret, cookie_name);
     match PgPool::connect(&db_url).await {
         Ok(pool) => {
             println!("Database connection pool created successfully");

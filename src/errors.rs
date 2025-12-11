@@ -11,6 +11,7 @@
 
 
 pub use thiserror::Error;
+use poem::error::ParseCookieError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum MyError {
@@ -28,6 +29,9 @@ pub enum MyError {
 
     #[error("Environment variable {entity} not set")]
     EnvVarNotSet { entity: &'static str },
+
+    #[error(transparent)]
+    CookieError(#[from] ParseCookieError) // To discuss on ticket
 }
 
 impl poem::error::ResponseError for MyError {
@@ -38,7 +42,8 @@ impl poem::error::ResponseError for MyError {
             Self::InvalidInput { input_type: _ } => StatusCode::BAD_REQUEST,
             Self::DBErrors { entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Self::GenerationFailed { entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::EnvVarNotSet{entity: _} => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::EnvVarNotSet{ entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::CookieError(_) => StatusCode::BAD_REQUEST,
         }
     }
 }

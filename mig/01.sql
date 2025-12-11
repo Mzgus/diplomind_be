@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS users_auth;
 DROP TABLE IF EXISTS users_sheets;
-DROP TABLE IF EXISTS refresh_token;
+DROP TABLE IF EXISTS refresh_tokens;
 
 CREATE TABLE IF NOT EXISTS users_sheets (
     id INTEGER PRIMARY KEY,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS users_auth (
     id_user_sheet INTEGER REFERENCES users_sheets(id) ON DELETE CASCADE,
 );
 
-CREATE TABLE IF NOT EXISTS refresh_token (
+CREATE TABLE IF NOT EXISTS refresh_tokens (
     token TEXT NOT NULL PRIMARY KEY,
     id_user_auth INTEGER REFERENCES users_auth(id) ON DELETE CASCADE,
     expiration_date TIMESTAMP NOT NULL 
