@@ -31,7 +31,10 @@ pub enum MyError {
     EnvVarNotSet { entity: &'static str },
 
     #[error(transparent)]
-    CookieError(#[from] ParseCookieError) // To discuss on ticket
+    CookieError(#[from] ParseCookieError), // To discuss on ticket
+
+    #[error("Expiration date is expired")]
+    TokenExpired,
 }
 
 impl poem::error::ResponseError for MyError {
@@ -44,6 +47,7 @@ impl poem::error::ResponseError for MyError {
             Self::GenerationFailed { entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Self::EnvVarNotSet{ entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Self::CookieError(_) => StatusCode::BAD_REQUEST,
+            Self::TokenExpired => StatusCode::UNAUTHORIZED,
         }
     }
 }

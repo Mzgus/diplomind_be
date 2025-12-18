@@ -1,6 +1,6 @@
 use diplomind::{MyError, handlers, services};
 use dotenv::dotenv;
-use poem::{EndpointExt, Server, listener::TcpListener, Route, get, middleware::CookieJarManager};
+use poem::{EndpointExt, Route, Server, get, listener::TcpListener, middleware::CookieJarManager, post};
 use sqlx::PgPool;
 
 #[tokio::main]
@@ -25,6 +25,8 @@ pub async fn main() -> Result<(), std::io::Error> {
             // use handlers::*;
             let routes = Route::new()
                 .at("/", get(test))
+                .at("/login", get(handlers::auth::login))
+                .at("/refresh_tokens", get(handlers::auth::refresh_tokens))
                 .data(pool)
                 .data(token_manager)
                 .with(CookieJarManager::new());

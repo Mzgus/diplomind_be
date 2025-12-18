@@ -1,6 +1,7 @@
 use crate::{errors::*, models::*, refresh_tokens};
 use chrono::{DateTime, Utc};
 use sqlx::query;
+use sqlx::Row;
 
 // Comment because not used
 // pub async fn get_access_token_claims<'e>(executor: impl sqlx::PgExecutor<'e>, user_auth_id: i32, exp : usize) -> Result<JWTClaims, MyError> {
@@ -23,16 +24,37 @@ use sqlx::query;
 //     Ok(claims)
 // }
 
-pub async fn create_refresh_token<'e>(executor: impl sqlx::PgExecutor<'e>, user_auth_id: i32, token: String, expiration_date : DateTime<Utc>) -> Result<RefreshToken, MyError> {
+
+
+// Comment because not used
+pub async fn get_refresh_token<'e>(executor: impl sqlx::PgExecutor<'e>, token: String) -> Result<RefreshToken, MyError> {
+    let mut query = sqlx::query_as(
+        r#"
+        SELECT * FROM "refresh_tokens"
+        WHERE "token" = ($1)
+    "#,
+    );
+    query = query.bind(&token);
+    let refresh_token: RefreshToken = match query.fetch_one(executor).await {
+        Ok(res) => res,
+        Err(_err) => {
+            return Err(MyError::DBErrors { entity: "Refresh token not found" });
+        }
+    };
+
+    Ok(refresh_token)
+}
+
+pub async fn create_refresh_token<'e>(executor: impl sqlx::PgExecutor<'e>, user_auth_id: i32, refresh_token: String, expiration_date : DateTime<Utc>) -> Result<RefreshToken, MyError> {
 
     let mut query = sqlx::query_as(
         r#"
-        INSERT INTO "refresh_tokens" ("token", "id_user_auth", "expiration_date")
+        INSERT INTO "refresh_tokens" ("refresh_token", "id_user_auth", "expiration_date")
         VALUES ($1, $2, $3)
         RETURNNING *
     "#,
     );
-    query = query.bind(&token).bind(user_auth_id).bind(expiration_date);
+    query = query.bind(&refresh_token).bind(user_auth_id).bind(expiration_date);
     let refresh_token : RefreshToken = match query.fetch_one(executor).await {
         Ok(res) => res,
         Err(_err) => {
@@ -43,30 +65,11 @@ pub async fn create_refresh_token<'e>(executor: impl sqlx::PgExecutor<'e>, user_
     Ok(refresh_token)
 }
 
-// Comment because not used
-// pub async fn get_refresh_token<'e>(executor: impl sqlx::PgExecutor<'e>, token: String) -> Result<RefreshToken, MyError> {
-//     let mut query = sqlx::query_as(
-//         r#"
-//         SELECT * FROM "refresh_tokens"
-//         WHERE "token" = ($1)
-//     "#,
-//     );
-//     query = query.bind(&token);
-//     let refresh_token: RefreshToken = match query.fetch_one(executor).await {
-//         Ok(res) => res,
-//         Err(_err) => {
-//             return Err(MyError::DBErrors { entity: "Refresh token not found" });
-//         }
-//     };
-
-//     Ok(refresh_token)
-// }
-
 pub async fn delete_refresh_token<'e>(executor: impl sqlx::PgExecutor<'e>, token: String) -> Result<RefreshToken, MyError> {
     let mut query = sqlx::query_as(
         r#"
         DELETE FROM "refresh_tokens"
-        WHERE "token" = ($1)
+        WHERE "refres_token" = ($1)
         RETURNING *
     "#,
     );
@@ -99,14 +102,15 @@ pub async fn delete_refresh_token_by_auth_id<'e>(executor: impl sqlx::PgExecutor
     Ok(refresh_token)
 }
 
-pub async fn login<'e>(executor: impl sqlx::PgExecutor<'e>, user_email: String) -> Result<User, MyError> {
+  pub async fn login<'e>(executor: impl sqlx::PgExecutor<'e>, user_email: &String) -> Result<User, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT * from "users_sheets" as us 
-        JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
+        JOIN "users_auth" as ua 
+        ON us.id = ua.id_user_sheet
         WHERE email = ($1)
         "#,
-    );
+    );  
     let row = match query.bind(user_email).fetch_one(executor).await {
         Ok(res) => res,
         Err(_) => {
@@ -124,7 +128,7 @@ pub async fn get_user_info_by_token<'e>(executor: impl sqlx::PgExecutor<'e>, ref
         FROM "users_sheets" as us
         JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
         JOIN "refresh_tokens" as rt ON ua.id = rt.id_user_auth
-        WHERE rt.token = ($1)
+        WHERE rt.refresh_token = ($1)
         "#
     );
     query = query.bind(refresh_token);
@@ -135,4 +139,21 @@ pub async fn get_user_info_by_token<'e>(executor: impl sqlx::PgExecutor<'e>, ref
         }
     };
     Ok(user_info)
+}
+
+pub async fn get_auth_id_by_email<'e>(executor: impl sqlx::PgExecutor<'e>, user_email: &String) -> Result<i32, MyError> {
+    let mut query = sqlx::query(
+        r#"
+        SELECT ua.id from "users_auth" as ua
+        WHERE ua.email = ($1)
+        "#
+    );
+    query = query.bind(user_email);
+    let user_auth_id: i32 = match query.fetch_one(executor).await {
+        Ok(row) => row.get("id"),
+        Err(_) => {
+            return Err(MyError::DBErrors { entity: "User auth not found" });
+        }
+    };
+    Ok(user_auth_id)
 }
