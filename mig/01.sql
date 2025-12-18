@@ -18,9 +18,9 @@ CREATE TABLE IF NOT EXISTS users_auth (
 );
 
 CREATE TABLE IF NOT EXISTS refresh_tokens (
-    refresh_token TEXT NOT NULL PRIMARY KEY,
+    token TEXT NOT NULL PRIMARY KEY,
     id_user_auth INTEGER REFERENCES users_auth(id) ON DELETE CASCADE,
-    expiration_date TIMESTAMP NOT NULL 
+    expiration_date TIMESTAMPTZ NOT NULL 
 );
 
 INSERT INTO users_sheets (last_name, first_name, type_user, profile_picture) VALUES ('dupon', 'pierre', 'admin', '');

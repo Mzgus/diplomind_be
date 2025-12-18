@@ -1,11 +1,12 @@
 use diplomind::{MyError, handlers, services};
-use dotenv::dotenv;
+// use dotenvy::dotenv;
 use poem::{EndpointExt, Route, Server, get, listener::TcpListener, middleware::CookieJarManager, post};
 use sqlx::PgPool;
+use dotenv::dotenv;
 
 #[tokio::main]
 pub async fn main() -> Result<(), std::io::Error> {
-    dotenv().ok();
+    dotenv().unwrap();
     let db_url = match std::env::var("DATABASE_URL") {
         Ok(res) => res,
         Err(_) => return Err(std::io::Error::new(std::io::ErrorKind::Other, MyError::EnvVarNotSet { entity: "DATABASE_URL" }.to_string()))
@@ -22,19 +23,18 @@ pub async fn main() -> Result<(), std::io::Error> {
     match PgPool::connect(&db_url).await {
         Ok(pool) => {
             println!("Database connection pool created successfully");
-            // use handlers::*;
+            use handlers::*;
             let routes = Route::new()
                 .at("/", get(test))
-                .at("/login", get(handlers::auth::login))
-                .at("/refresh_tokens", get(handlers::auth::refresh_tokens))
+                .at("/login", post(login))
+                .at("/refresh_tokens", get(refresh_tokens))
                 .data(pool)
                 .data(token_manager)
                 .with(CookieJarManager::new());
-            
-            let _ = Server::new(TcpListener::bind("0.0.0.0:3000"))
+                Server::new(TcpListener::bind("0.0.0.0:3000"))
                 .run(routes)
-                .await;
-            Ok(())
+                .await?;
+            return Ok(())
         }
         Err(e) => {
             eprintln!("Failed to create database connection pool: {}", e);
