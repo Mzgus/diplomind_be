@@ -76,10 +76,10 @@ impl TokenManager {
 
         let mut cookie = cookie::Cookie::new(cookie_name, cookie_value);
 
-        cookie.set_path("/refresh_tokens"); // Make the cookie available to all paths on the domain
-        cookie.set_http_only(true); // Prevent JavaScript access (good for security)
-        cookie.set_secure(true); // Only send over HTTPS (essential for production)
-        cookie.set_same_site(poem::web::cookie::SameSite::Lax); // Protection against CSRF
+        cookie.set_path("/api/refresh_tokens"); // Make the cookie available to all paths on the domain
+        cookie.set_http_only(true);
+        cookie.set_secure(true);
+        cookie.set_same_site(poem::web::cookie::SameSite::Lax);
 
         // let expiration_date = self.generate_expiration_date(chrono::Duration::weeks(1));
         cookie.set_expires(expiration_date);
@@ -102,17 +102,12 @@ impl TokenManager {
     }
 
     pub fn clear_cookie(&self, cookie_jar: &CookieJar) {
-        let cookie_name = &self.cookie_name;
-        
-        let mut cookie = cookie::Cookie::new(cookie_name, ""); // Value doesn't matter much for clearing
-        cookie.set_path("/refresh_tokens");
-        cookie.set_http_only(true);
-        cookie.set_secure(true);
-        cookie.set_same_site(poem::web::cookie::SameSite::Lax);
-        
-        // Set expiration to a past date
-        cookie.set_expires(Utc::now() - Duration::days(7)); // Expire 7 days ago
-        cookie_jar.add(cookie);
+        // let mut cookie = cookie::Cookie::named(self.cookie_name.clone());
+        // cookie.set_path("/api/refresh_tokens");
+        // cookie.set_http_only(true);
+        // cookie.set_secure(true);
+        // cookie.set_same_site(poem::web::cookie::SameSite::Lax);
+        // cookie_jar.remove(self.cookie_name.clone());
     }
 
     pub fn generate_token_pair(&self, token_manager: TokenManager, user_info: models::auth::User) -> Result<(String, String), errors::MyError> {

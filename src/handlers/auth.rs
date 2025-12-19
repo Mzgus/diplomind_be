@@ -79,3 +79,15 @@ pub async fn refresh_tokens(
         
     Ok(Json(crate::AccessToken { token: access_token })) 
 }
+
+
+//logout
+#[poem::handler]
+pub async fn logout(
+    Data(token_manager): Data<&TokenManager>,
+    cookie_jar: &CookieJar,
+) -> Result<(), errors::MyError> {
+    // cookie_jar.remove(token_manager.cookie_name.clone());
+    // token_manager.clear_cookie(cookie_jar);
+    Ok(())
+}

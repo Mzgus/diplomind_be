@@ -1,6 +1,6 @@
 use diplomind::{MyError, handlers, services};
 // use dotenvy::dotenv;
-use poem::{EndpointExt, Route, Server, get, listener::TcpListener, middleware::CookieJarManager, post};
+use poem::{EndpointExt, Route, Server, get, listener::TcpListener, middleware::{CookieJarManager, Cors}, post};
 use sqlx::PgPool;
 use dotenv::dotenv;
 
@@ -27,6 +27,7 @@ pub async fn main() -> Result<(), std::io::Error> {
             let routes = Route::new()
                 .at("/", get(test))
                 .at("/login", post(login))
+                .at("/logout", get(logout))
                 .at("/refresh_tokens", get(refresh_tokens))
                 .data(pool)
                 .data(token_manager)
