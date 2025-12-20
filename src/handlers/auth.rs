@@ -77,6 +77,9 @@ pub async fn refresh_tokens(
             Err(err) => return Err(err),
         };
 
+    // Delete the old refresh token (Rotation)
+    let _ = db::auth::delete_refresh_token(executor, token.clone()).await;
+
     let (access_token, refresh_token) =
         match token_manager.generate_token_pair(token_manager.clone(), user_info) {
             Ok(res) => res,
