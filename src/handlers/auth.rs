@@ -99,9 +99,20 @@ pub async fn refresh_tokens(
 //logout
 #[poem::handler]
 pub async fn logout(
+    Data(executor): Data<&Pool<Postgres>>,
     Data(token_manager): Data<&TokenManager>,
     cookie_jar: &CookieJar,
 ) -> Result<(), errors::MyError> {
+    let token = match token_manager.get_cookie_value(cookie_jar) {
+        Ok(res) => res,
+        Err(_) => return Ok(()),
+    };
+     // If no cookie, just return ok (already logged out conceptually)
+     println!("token: {}", token);
+    if !token.is_empty() {
+        let _ = db::auth::delete_refresh_token(executor, token).await;
+    }
+    
     token_manager.clear_cookie(cookie_jar);
     Ok(())
 }

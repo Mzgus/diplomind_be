@@ -80,7 +80,6 @@ impl TokenManager {
 
         let mut cookie = cookie::Cookie::new(cookie_name, cookie_value);
 
-        cookie.set_path("/api/refresh_tokens"); // Make the cookie available to all paths on the domain
         cookie.set_http_only(true);
         cookie.set_secure(true);
         cookie.set_same_site(poem::web::cookie::SameSite::Lax);
@@ -105,7 +104,7 @@ impl TokenManager {
 
     pub fn clear_cookie(&self, cookie_jar: &CookieJar) {
         let mut cookie = cookie::Cookie::named(self.cookie_name.clone());
-        cookie.set_path("/api/refresh_tokens");
+        // cookie.set_path("/api/refresh_tokens");
         cookie.set_http_only(true);
         cookie.set_secure(true);
         cookie.set_same_site(poem::web::cookie::SameSite::Lax);
@@ -156,3 +155,4 @@ impl TokenManager {
         Ok(())
     }
 }
+
