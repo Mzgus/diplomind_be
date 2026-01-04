@@ -29,6 +29,7 @@ pub async fn main() -> Result<(), std::io::Error> {
                 .at("/login", post(login))
                 .at("/logout", get(logout))
                 .at("/refresh_tokens", get(refresh_tokens))
+                .at("/users", get(handlers::users::get_all_users))
                 .data(pool)
                 .data(token_manager)
                 .with(CookieJarManager::new());

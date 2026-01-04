@@ -118,8 +118,8 @@ impl TokenManager {
         user_info: models::auth::User,
     ) -> Result<(String, String), errors::MyError> {
         let exp = token_manager
-            // .generate_expiration_date(chrono::Duration::minutes(5))
-            .generate_expiration_date(chrono::Duration::seconds(10))
+            .generate_expiration_date(chrono::Duration::minutes(5))
+            // .generate_expiration_date(chrono::Duration::seconds(10))
             .timestamp() as usize;
         let claims = models::JWTClaims {
             user: user_info,
