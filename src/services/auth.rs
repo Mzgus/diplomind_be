@@ -1,6 +1,10 @@
 use crate::MyError;
 use crate::db;
 use crate::{errors, models};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2,
+};
 use base64::prelude::*;
 use chrono::DateTime;
 use chrono::Duration;
@@ -9,6 +13,33 @@ use jsonwebtoken::*;
 use poem::web::cookie;
 use poem::web::cookie::CookieJar;
 use sqlx::*;
+
+// ========== Password Hashing Utilities ==========
+
+/// Hash a password using Argon2
+pub fn hash_password(password: &str) -> Result<String, errors::MyError> {
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    
+    let password_hash = argon2
+        .hash_password(password.as_bytes(), &salt)
+        .map_err(|e| errors::MyError::PasswordHashError(e.to_string()))?;
+    
+    Ok(password_hash.to_string())
+}
+
+/// Verify a password against a hash using Argon2
+pub fn verify_password(password: &str, hash: &str) -> Result<bool, errors::MyError> {
+    let parsed_hash = PasswordHash::new(hash)
+        .map_err(|e| errors::MyError::PasswordHashError(e.to_string()))?;
+    
+    let argon2 = Argon2::default();
+    
+    match argon2.verify_password(password.as_bytes(), &parsed_hash) {
+        Ok(_) => Ok(true),
+        Err(_) => Ok(false),
+    }
+}
 
 #[derive(Clone)]
 pub struct TokenManager {
@@ -81,10 +112,11 @@ impl TokenManager {
         let mut cookie = cookie::Cookie::new(cookie_name, cookie_value);
 
         cookie.set_http_only(true);
-        cookie.set_secure(true);
+        // In development (HTTP), secure must be false. In production (HTTPS), it should be true.
+        // For now, we'll set it to false to work with HTTP in development
+        cookie.set_secure(false);
         cookie.set_same_site(poem::web::cookie::SameSite::Lax);
 
-        // let expiration_date = self.generate_expiration_date(chrono::Duration::weeks(1));
         cookie.set_expires(expiration_date);
 
         cookie
@@ -104,9 +136,8 @@ impl TokenManager {
 
     pub fn clear_cookie(&self, cookie_jar: &CookieJar) {
         let mut cookie = cookie::Cookie::named(self.cookie_name.clone());
-        // cookie.set_path("/api/refresh_tokens");
         cookie.set_http_only(true);
-        cookie.set_secure(true);
+        cookie.set_secure(false); // Same as create_cookie for development
         cookie.set_same_site(poem::web::cookie::SameSite::Lax);
         cookie.set_expires(Utc::now() - chrono::Duration::days(1)); // Expire immediately
         cookie_jar.add(cookie); // Overwrite the existing cookie with the expired one

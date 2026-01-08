@@ -35,6 +35,12 @@ pub enum MyError {
 
     #[error("Expiration date is expired")]
     TokenExpired,
+
+    #[error("Invalid credentials")]
+    InvalidCredentials,
+
+    #[error("Password hashing error: {0}")]
+    PasswordHashError(String),
 }
 
 impl poem::error::ResponseError for MyError {
@@ -48,6 +54,8 @@ impl poem::error::ResponseError for MyError {
             Self::EnvVarNotSet{ entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Self::CookieError(_) => StatusCode::BAD_REQUEST,
             Self::TokenExpired => StatusCode::UNAUTHORIZED,
+            Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
+            Self::PasswordHashError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
 }

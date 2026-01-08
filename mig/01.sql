@@ -23,5 +23,17 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     expiration_date TIMESTAMPTZ NOT NULL 
 );
 
-INSERT INTO users_sheets (last_name, first_name, type_user, profile_picture) VALUES ('dupon', 'pierre', 'admin', '');
-INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES ('dupon@test.com', 'mdp', 1);
+INSERT INTO users_sheets (id, last_name, first_name, type_user, profile_picture) 
+VALUES (1, 'dupon', 'pierre', 'admin', '');
+
+INSERT INTO users_auth (email, pwd, id_user_sheet) 
+VALUES ('dupon@test.com', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 1);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expiration 
+ON refresh_tokens(expiration_date);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_auth 
+ON refresh_tokens(id_user_auth);
+
+CREATE INDEX IF NOT EXISTS idx_users_auth_email 
+ON users_auth(email);
