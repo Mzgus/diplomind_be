@@ -84,7 +84,7 @@ impl TokenManager {
         let mut utc: DateTime<Utc> = Utc::now();
         let validity_duration = duration;
         utc += validity_duration;
-        return utc;
+        utc
     }
 
     pub fn generate_refresh_token() -> Result<String, errors::MyError> {
@@ -123,7 +123,7 @@ impl TokenManager {
 
     pub fn get_cookie_value(&self, cookie_jar: &CookieJar) -> Result<String, errors::MyError> {
         let cookie_name = &self.cookie_name;
-        let refresh_token = match cookie_jar.get(&cookie_name) {
+        let refresh_token = match cookie_jar.get(cookie_name) {
             Some(res) => match res.value::<String>() {
                 Ok(res) => res,
                 Err(err) => return Err(MyError::CookieError(err)),
@@ -155,32 +155,26 @@ impl TokenManager {
             exp,
         };
 
-        let access_token: String = match TokenManager::generate_access_token(self, claims) {
-            Ok(res) => res,
-            Err(err) => return Err(err),
-        };
-        let refresh_token: String = match TokenManager::generate_refresh_token() {
-            Ok(res) => res,
-            Err(err) => return Err(err),
-        };
+        let access_token: String = TokenManager::generate_access_token(self, claims)?;
+        let refresh_token: String = TokenManager::generate_refresh_token()?;
         Ok((access_token, refresh_token))
     }
 
-    pub async fn manage_token<'e>(
+    pub async fn manage_token(
         &self,
         executor: &Pool<Postgres>,
         cookie_jar: &CookieJar,
-        refresh_token: &String,
+        refresh_token: &str,
         user_auth_id: i32,
     ) -> Result<(), MyError> {
         // enregistrer le refresh d ans la db
         let exp: DateTime<Utc> = self.generate_expiration_date(chrono::Duration::weeks(2));
 
-        match db::create_refresh_token(executor, user_auth_id, refresh_token.clone(), exp).await {
+        match db::create_refresh_token(executor, user_auth_id, refresh_token.to_owned(), exp).await {
             Ok(_) => {}
             Err(err) => return Err(err),
         };
-        let cookie = self.create_cookie(refresh_token.clone(), exp);
+        let cookie = self.create_cookie(refresh_token.to_owned(), exp);
         cookie_jar.add(cookie);
         Ok(())
     }

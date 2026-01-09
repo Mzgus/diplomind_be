@@ -35,13 +35,9 @@ pub async fn login(
             Err(err) => return Err(err),
         };
 
-    match token_manager
+    token_manager
         .manage_token(executor, cookie_jar, &refresh_token, user_auth_id)
-        .await
-    {
-        Err(err) => return Err(err),
-        _ => {}
-    }
+        .await?;
 
     Ok(Json(crate::AccessToken {
         token: access_token,
@@ -90,13 +86,9 @@ pub async fn refresh_tokens(
             Err(err) => return Err(err),
         };
 
-    match token_manager
+    token_manager
         .manage_token(executor, cookie_jar, &refresh_token, user_auth_id)
-        .await
-    {
-        Err(err) => return Err(err),
-        _ => {}
-    }
+        .await?;
 
     Ok(Json(crate::AccessToken {
         token: access_token,

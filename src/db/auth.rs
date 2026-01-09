@@ -90,7 +90,7 @@ pub async fn delete_refresh_token_by_auth_id<'e>(
         RETURNING *
     "#,
     );
-    query = query.bind(&user_auth_id);
+    query = query.bind(user_auth_id);
     let refresh_token: RefreshToken = match query.fetch_one(executor).await {
         Ok(res) => res,
         Err(_err) => {
