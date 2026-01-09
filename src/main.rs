@@ -24,17 +24,23 @@ pub async fn main() -> Result<(), std::io::Error> {
         Ok(pool) => {
             println!("Database connection pool created successfully");
             use handlers::*;
+            use diplomind::middleware::jwt_auth::JwtAuth;
+            
+            // Create the main route with all endpoints
             let routes = Route::new()
+                // Public routes (no authentication required)
                 .at("/", get(test))
                 .at("/login", post(login))
-                .at("/logout", get(logout))
                 .at("/refresh_tokens", get(refresh_tokens))
-                .at("/verify_token", get(verify_token))
-                .at("/users", get(handlers::users::get_all_users))
+                // Protected routes (authentication required) - add middleware per route
+                .at("/logout", get(logout).with(JwtAuth::new(token_manager.clone())))
+                .at("/verify_token", get(verify_token).with(JwtAuth::new(token_manager.clone())))
+                .at("/users", get(handlers::users::get_all_users).with(JwtAuth::new(token_manager.clone())))
                 .data(pool)
                 .data(token_manager)
                 .with(CookieJarManager::new());
-                Server::new(TcpListener::bind("0.0.0.0:3000"))
+                
+            Server::new(TcpListener::bind("0.0.0.0:3000"))
                 .run(routes)
                 .await?;
             return Ok(())

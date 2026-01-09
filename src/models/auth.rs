@@ -12,7 +12,7 @@ pub struct AccessToken {
     pub token: String,
 }
 
-#[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, sqlx::FromRow, serde::Deserialize, serde::Serialize)]
 pub struct User {
     pub user_id: i32,
     pub user_lastname: String,

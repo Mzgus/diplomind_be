@@ -125,33 +125,12 @@ pub async fn logout(
 }
 
 // Verify token endpoint - validates JWT and returns user info
+// Now simplified using AuthUser extractor
 #[poem::handler]
 pub async fn verify_token(
-    Data(token_manager): Data<&TokenManager>,
-    req: &poem::Request,
+    auth_user: crate::middleware::jwt_auth::AuthUser,
 ) -> Result<Json<models::User>, errors::MyError> {
-    use jsonwebtoken::{decode, DecodingKey, Validation};
-    
-    // Extract Authorization header
-    let auth_header = req
-        .headers()
-        .get("Authorization")
-        .and_then(|h| h.to_str().ok())
-        .ok_or(errors::MyError::TokenExpired)?;
-    
-    // Extract token from "Bearer <token>"
-    let token = auth_header
-        .strip_prefix("Bearer ")
-        .ok_or(errors::MyError::TokenExpired)?;
-    
-    // Decode and validate the JWT
-    let token_data = decode::<models::JWTClaims>(
-        token,
-        &DecodingKey::from_secret(token_manager.jwt_secret.as_ref()),
-        &Validation::default(),
-    )
-    .map_err(|_| errors::MyError::TokenExpired)?;
-    
-    // Return the user information from the token
-    Ok(Json(token_data.claims.user))
+    // The middleware already validated the token
+    // Just return the authenticated user
+    Ok(Json(auth_user.0))
 }

@@ -3,6 +3,7 @@ pub mod errors;
 pub mod models;
 pub mod services;
 pub mod handlers;
+pub mod middleware;
 pub use db::*;
 pub use errors::*;
 pub use models::*;

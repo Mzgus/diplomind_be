@@ -1,4 +1,4 @@
-use crate::{db, errors};
+use crate::{db, errors, middleware::jwt_auth::AuthUser};
 use poem::web::Data;
 use poem::web::Json;
 use sqlx::*;
@@ -15,6 +15,7 @@ pub struct UserPublic {
 #[poem::handler]
 pub async fn get_all_users(
     Data(executor): Data<&Pool<Postgres>>,
+    _auth_user: AuthUser, // Requires authentication
 ) -> Result<Json<Vec<UserPublic>>, errors::MyError> {
     match db::users::get_all_users(executor).await {
         Ok(users) => Ok(Json(users)),
