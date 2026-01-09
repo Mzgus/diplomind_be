@@ -1,30 +1,7 @@
-use crate::{errors::*, models::*, refresh_tokens};
+use crate::{errors::*, models::*};
 use chrono::{DateTime, Utc};
 use sqlx::Row;
-use sqlx::query;
 
-// Comment because not used
-// pub async fn get_access_token_claims<'e>(executor: impl sqlx::PgExecutor<'e>, user_auth_id: i32, exp : usize) -> Result<JWTClaims, MyError> {
-//     let mut query = sqlx::query_as(
-//         r#"
-//         SELECT (us.id, us.last_name, us.first_name, us.type_user, us.profile_picture, ua.email) from "users_sheets" as us
-//         JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
-//         WHERE ua.id = ($1)
-//     "#,
-//     );
-//     query = query.bind(user_auth_id);
-//     let user: User = match query.fetch_one(executor).await {
-//         Ok(res) => res,
-//         Err(_) => {
-//             return Err(MyError::DBErrors { entity: "acces token not created" });
-//         }
-//     };
-//     // let exp = TokenManager::generate_expiration_date(Duration::minutes(5)).timestamp() as usize;
-//     let claims = JWTClaims{user, exp};
-//     Ok(claims)
-// }
-
-// Comment because not used
 pub async fn get_refresh_token<'e>(
     executor: impl sqlx::PgExecutor<'e>,
     token: String,

@@ -7,7 +7,6 @@ use argon2::{
 };
 use base64::prelude::*;
 use chrono::DateTime;
-use chrono::Duration;
 use chrono::prelude::*;
 use jsonwebtoken::*;
 use poem::web::cookie;
@@ -149,8 +148,7 @@ impl TokenManager {
         user_info: models::auth::User,
     ) -> Result<(String, String), errors::MyError> {
         let exp = token_manager
-            // .generate_expiration_date(chrono::Duration::minutes(5))
-            .generate_expiration_date(chrono::Duration::seconds(10))
+            .generate_expiration_date(chrono::Duration::minutes(10))
             .timestamp() as usize;
         let claims = models::JWTClaims {
             user: user_info,
