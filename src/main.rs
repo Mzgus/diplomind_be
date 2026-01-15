@@ -1,6 +1,6 @@
 use diplomind::{MyError, handlers, services};
 // use dotenvy::dotenv;
-use poem::{EndpointExt, Route, Server, get, listener::TcpListener, middleware::CookieJarManager, post};
+use poem::{EndpointExt, Route, Server, get, post, put, patch, delete, listener::TcpListener, middleware::CookieJarManager};
 use sqlx::PgPool;
 use dotenv::dotenv;
 
@@ -35,7 +35,40 @@ pub async fn main() -> Result<(), std::io::Error> {
                 // Protected routes (authentication required) - add middleware per route
                 .at("/logout", get(logout).with(JwtAuth::new(token_manager.clone())))
                 .at("/verify_token", get(verify_token).with(JwtAuth::new(token_manager.clone())))
+                // users routes (complete user information with JOIN)
                 .at("/users", get(handlers::users::get_all_users).with(JwtAuth::new(token_manager.clone())))
+                .at("/users/:id", get(handlers::users::get_user_by_id).with(JwtAuth::new(token_manager.clone())))
+                .at("/users/email/:email", get(handlers::users::get_user_by_email).with(JwtAuth::new(token_manager.clone())))
+                // users_sheets CRUD routes
+                .at("/users_sheets", 
+                    get(handlers::users_sheets::get_all_user_sheets)
+                        .post(handlers::users_sheets::create_user_sheet)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                .at("/users_sheets/:id", 
+                    get(handlers::users_sheets::get_user_sheet)
+                        .put(handlers::users_sheets::update_user_sheet)
+                        .delete(handlers::users_sheets::delete_user_sheet)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                // users_auth CRUD routes
+                .at("/users_auth", 
+                    post(handlers::users_auth::create_user_auth)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                .at("/users_auth/:id", 
+                    get(handlers::users_auth::get_user_auth)
+                        .delete(handlers::users_auth::delete_user_auth)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                .at("/users_auth/:id/email", 
+                    patch(handlers::users_auth::update_user_auth_email)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                .at("/users_auth/:id/password", 
+                    patch(handlers::users_auth::update_user_auth_password)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
                 .data(pool)
                 .data(token_manager)
                 .with(CookieJarManager::new());
