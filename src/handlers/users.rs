@@ -1,14 +1,17 @@
 use crate::{db, errors::MyError, middleware::jwt_auth::AuthUser, models::User};
-use poem::web::{Data, Path, Json};
+use poem::web::{Data, Path, Json, Query};
 use sqlx::{Pool, Postgres};
+use crate::models::{PaginationParams, PaginatedResponse};
 
-/// Get all users (complete information with JOIN)
+/// Get all users (paginated)
 #[poem::handler]
 pub async fn get_all_users(
     Data(pool): Data<&Pool<Postgres>>,
+    Query(mut params): Query<PaginationParams>,
     _auth_user: AuthUser, // Requires authentication
-) -> Result<Json<Vec<User>>, MyError> {
-    let users = db::users::get_all_users(pool).await?;
+) -> Result<Json<PaginatedResponse<User>>, MyError> {
+    params.validate();
+    let users = db::users::get_all_users_paginated(pool, params).await?;
     Ok(Json(users))
 }
 
