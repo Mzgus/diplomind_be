@@ -4,5 +4,6 @@ pub mod models;
 pub mod services;
 pub mod handlers;
 pub mod middleware;
+pub mod validators;
 pub use errors::*;
 pub use models::*;

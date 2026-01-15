@@ -39,6 +39,9 @@ pub enum MyError {
     #[error("Invalid credentials")]
     InvalidCredentials,
 
+    #[error("Unauthorized access")]
+    Unauthorized,
+
     #[error("Password hashing error: {0}")]
     PasswordHashError(String),
 }
@@ -55,6 +58,7 @@ impl poem::error::ResponseError for MyError {
             Self::CookieError(_) => StatusCode::BAD_REQUEST,
             Self::TokenExpired => StatusCode::UNAUTHORIZED,
             Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
+            Self::Unauthorized => StatusCode::FORBIDDEN,
             Self::PasswordHashError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }
