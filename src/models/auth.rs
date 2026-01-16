@@ -21,6 +21,7 @@ pub struct User {
     pub user_profilepicture: String,
     pub user_email: String,
     pub user_pwd: String,
+    pub user_active: Option<bool>, // For admin deactivation
 }
 
 #[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize)]

@@ -15,6 +15,7 @@ pub async fn get_user_by_id<'e>(
             us.first_name AS user_firstname, 
             us.type_user AS user_role, 
             us.profile_picture AS user_profilepicture, 
+            us.active AS user_active, 
             ua.email AS user_email, 
             ua.pwd AS user_pwd
         FROM "users_sheets" as us 
