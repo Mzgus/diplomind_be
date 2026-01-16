@@ -151,3 +151,28 @@ pub async fn delete_user_sheet<'e>(
 
     Ok(user_sheet)
 }
+
+/// Set user active status (for admin deactivation/activation)
+pub async fn set_user_active_status<'e>(
+    executor: impl PgExecutor<'e>,
+    user_id: i32,
+    active: bool,
+) -> Result<UserSheet, MyError> {
+    let query = sqlx::query_as(
+        r#"
+        UPDATE "users_sheets"
+        SET "active" = $1
+        WHERE "id" = $2
+        RETURNING *
+        "#,
+    )
+    .bind(active)
+    .bind(user_id);
+
+    let user_sheet: UserSheet = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
+        entity: "Failed to update user active status",
+    })?;
+
+    Ok(user_sheet)
+}
+

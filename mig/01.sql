@@ -201,7 +201,3 @@ CREATE INDEX IF NOT EXISTS idx_course_skills_skill ON course_skills(skill_id);
 -- Step Skills
 CREATE INDEX IF NOT EXISTS idx_step_skills_step ON step_skills(step_id);
 CREATE INDEX IF NOT EXISTS idx_step_skills_skill ON step_skills(skill_id);
-
--- ============================================
--- 5. Sample Data (for testing)
--- ============================================

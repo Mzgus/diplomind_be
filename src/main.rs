@@ -1,6 +1,6 @@
 use diplomind::{MyError, handlers, services};
 // use dotenvy::dotenv;
-use poem::{EndpointExt, Route, Server, get, post, put, patch, delete, listener::TcpListener, middleware::CookieJarManager};
+use poem::{EndpointExt, Route, Server, get, post, patch, listener::TcpListener, middleware::CookieJarManager};
 use sqlx::PgPool;
 use dotenv::dotenv;
 
@@ -23,18 +23,17 @@ pub async fn main() -> Result<(), std::io::Error> {
     match PgPool::connect(&db_url).await {
         Ok(pool) => {
             println!("Database connection pool created successfully");
-            use handlers::*;
             use diplomind::middleware::jwt_auth::JwtAuth;
             
             // Create the main route with all endpoints
             let routes = Route::new()
                 // Public routes (no authentication required)
                 .at("/", get(test))
-                .at("/login", post(login))
-                .at("/refresh_tokens", get(refresh_tokens))
+                .at("/login", post(handlers::auth::login))
+                .at("/refresh_tokens", get(handlers::auth::refresh_tokens))
                 // Protected routes (authentication required) - add middleware per route
-                .at("/logout", get(logout).with(JwtAuth::new(token_manager.clone())))
-                .at("/verify_token", get(verify_token).with(JwtAuth::new(token_manager.clone())))
+                .at("/logout", get(handlers::auth::logout).with(JwtAuth::new(token_manager.clone())))
+                .at("/verify_token", get(handlers::auth::verify_token).with(JwtAuth::new(token_manager.clone())))
                 // users routes (complete user information with JOIN)
                 .at("/users", get(handlers::users::get_all_users).with(JwtAuth::new(token_manager.clone())))
                 .at("/users/:id", get(handlers::users::get_user_by_id).with(JwtAuth::new(token_manager.clone())))
@@ -67,6 +66,19 @@ pub async fn main() -> Result<(), std::io::Error> {
                 )
                 .at("/users_auth/:id/password", 
                     patch(handlers::users_auth::update_user_auth_password)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                // Admin security routes
+                .at("/admin/users/:id/deactivate",
+                    patch(handlers::admin::deactivate_user)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                .at("/admin/users/:id/activate",
+                    patch(handlers::admin::activate_user)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                .at("/admin/security/revoke-all-sessions",
+                    post(handlers::admin::revoke_all_sessions)
                         .with(JwtAuth::new(token_manager.clone()))
                 )
                 .data(pool)
