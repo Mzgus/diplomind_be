@@ -2,58 +2,62 @@
 -- This file populates the database with realistic test data
 -- Run this AFTER running 01.sql migration
 
+-- Reset sequences to start from 1
+SELECT setval('users_sheets_id_seq', 1, false);
+SELECT setval('users_auth_id_seq', 1, false);
+
 -- ============================================
 -- 1. Users (Students, Teachers, Admins)
 -- ============================================
 
--- Admin user (already exists from migration, but let's add more)
-INSERT INTO users_sheets (last_name, first_name, type_user, profile_picture, active) VALUES
-('Martin', 'Sophie', 'admin', 'https://i.pravatar.cc/150?img=1', TRUE),
-('Bernard', 'Lucas', 'admin', 'https://i.pravatar.cc/150?img=2', TRUE);
+-- Admin users (id 1, 2)
+INSERT INTO users_sheets (id, last_name, first_name, type_user, profile_picture, active) VALUES
+(1, 'Martin', 'Sophie', 'admin', 'https://i.pravatar.cc/150?img=1', TRUE),
+(2, 'Bernard', 'Lucas', 'admin', 'https://i.pravatar.cc/150?img=2', TRUE);
 
--- Teachers
-INSERT INTO users_sheets (last_name, first_name, type_user, profile_picture, active) VALUES
-('Dubois', 'Marie', 'teacher', 'https://i.pravatar.cc/150?img=5', TRUE),
-('Petit', 'Jean', 'teacher', 'https://i.pravatar.cc/150?img=6', TRUE),
-('Robert', 'Claire', 'teacher', 'https://i.pravatar.cc/150?img=7', TRUE);
+-- Teachers (id 3, 4, 5)
+INSERT INTO users_sheets (id, last_name, first_name, type_user, profile_picture, active) VALUES
+(3, 'Dubois', 'Marie', 'teacher', 'https://i.pravatar.cc/150?img=5', TRUE),
+(4, 'Petit', 'Jean', 'teacher', 'https://i.pravatar.cc/150?img=6', TRUE),
+(5, 'Robert', 'Claire', 'teacher', 'https://i.pravatar.cc/150?img=7', TRUE);
 
--- Students
-INSERT INTO users_sheets (last_name, first_name, type_user, profile_picture, active) VALUES
-('Moreau', 'Emma', 'student', 'https://i.pravatar.cc/150?img=10', TRUE),
-('Simon', 'Louis', 'student', 'https://i.pravatar.cc/150?img=11', TRUE),
-('Laurent', 'Chloé', 'student', 'https://i.pravatar.cc/150?img=12', TRUE),
-('Lefebvre', 'Hugo', 'student', 'https://i.pravatar.cc/150?img=13', TRUE),
-('Michel', 'Léa', 'student', 'https://i.pravatar.cc/150?img=14', TRUE),
-('Garcia', 'Nathan', 'student', 'https://i.pravatar.cc/150?img=15', TRUE),
-('David', 'Manon', 'student', 'https://i.pravatar.cc/150?img=16', TRUE),
-('Bertrand', 'Tom', 'student', 'https://i.pravatar.cc/150?img=17', TRUE),
-('Roux', 'Sarah', 'student', 'https://i.pravatar.cc/150?img=18', TRUE),
-('Vincent', 'Arthur', 'student', 'https://i.pravatar.cc/150?img=19', TRUE);
+-- Students (id 6-15)
+INSERT INTO users_sheets (id, last_name, first_name, type_user, profile_picture, active) VALUES
+(6, 'Moreau', 'Emma', 'student', 'https://i.pravatar.cc/150?img=10', TRUE),
+(7, 'Simon', 'Louis', 'student', 'https://i.pravatar.cc/150?img=11', TRUE),
+(8, 'Laurent', 'Chloé', 'student', 'https://i.pravatar.cc/150?img=12', TRUE),
+(9, 'Lefebvre', 'Hugo', 'student', 'https://i.pravatar.cc/150?img=13', TRUE),
+(10, 'Michel', 'Léa', 'student', 'https://i.pravatar.cc/150?img=14', TRUE),
+(11, 'Garcia', 'Nathan', 'student', 'https://i.pravatar.cc/150?img=15', TRUE),
+(12, 'David', 'Manon', 'student', 'https://i.pravatar.cc/150?img=16', TRUE),
+(13, 'Bertrand', 'Tom', 'student', 'https://i.pravatar.cc/150?img=17', TRUE),
+(14, 'Roux', 'Sarah', 'student', 'https://i.pravatar.cc/150?img=18', TRUE),
+(15, 'Vincent', 'Arthur', 'student', 'https://i.pravatar.cc/150?img=19', TRUE);
 
--- Authentication for all users (password: "password123" hashed with Argon2)
+-- Authentication for all users (password: "Password123" hashed with Argon2)
 -- Admin
 INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES
-('sophie.martin@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 2),
-('lucas.bernard@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 3);
+('sophie.martin@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 2),
+('lucas.bernard@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 3);
 
--- Teachers
+-- Teachers (id 3, 4, 5)
 INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES
-('marie.dubois@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 4),
-('jean.petit@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 5),
-('claire.robert@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 6);
+('marie.dubois@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 3),
+('jean.petit@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 4),
+('claire.robert@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 5);
 
--- Students
+-- Students (id 6-15)
 INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES
-('emma.moreau@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 7),
-('louis.simon@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 8),
-('chloe.laurent@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 9),
-('hugo.lefebvre@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 10),
-('lea.michel@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 11),
-('nathan.garcia@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 12),
-('manon.david@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 13),
-('tom.bertrand@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 14),
-('sarah.roux@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 15),
-('arthur.vincent@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$HlMdktaGvdvVGeYoK+XLIQ$DOjIQ7E/MWH8rIZJk1iBHB13BH2IvrvDZFKPJUBr1x8', 16);
+('emma.moreau@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 6),
+('louis.simon@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 7),
+('chloe.laurent@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 8),
+('hugo.lefebvre@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 9),
+('lea.michel@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 10),
+('nathan.garcia@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 11),
+('manon.david@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 12),
+('tom.bertrand@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 13),
+('sarah.roux@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 14),
+('arthur.vincent@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 15);
 
 -- ============================================
 -- 2. Classes
@@ -276,4 +280,4 @@ SELECT setval('steps_id_seq', (SELECT MAX(id) FROM steps));
 -- Projects: 5
 -- Steps: 14
 -- Validations: 12 (various statuses)
--- passwords: password123
+-- passwords: Password123

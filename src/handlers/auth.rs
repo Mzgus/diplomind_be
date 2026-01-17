@@ -18,7 +18,12 @@ pub async fn login(
         Ok(res) => res,
         Err(err) => return Err(err),
     };
-    
+    // Check if user is active
+    if let Some(active) = user_info.user_active {
+        if !active {
+            return Err(errors::MyError::Unauthorized);
+        }
+    }
     // Verify password using Argon2
     let password_valid = match auth::verify_password(&user_auth.pwd, &user_info.user_pwd) {
         Ok(valid) => valid,
