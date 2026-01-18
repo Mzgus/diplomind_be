@@ -58,7 +58,7 @@ impl poem::error::ResponseError for MyError {
             Self::CookieError(_) => StatusCode::BAD_REQUEST,
             Self::TokenExpired => StatusCode::UNAUTHORIZED,
             Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
-            Self::Unauthorized => StatusCode::FORBIDDEN,
+            Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::PasswordHashError(_) => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

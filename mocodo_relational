@@ -1,0 +1,37 @@
+%%mocodo
+
+:
+AUTHENTIFICATION: id, email, mdp, #id_fiche_utilisateur > FICHE_UTILISATEUR > id
+:
+FICHE_UTILISATEUR: id, nom, prenom, type_utilisateur, photo_profil, actif
+:
+VALIDATE: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_competence > COMPETENCE > id, statut
+:
+COMPETENCE: id, nom, description
+:
+ETAPE_COMPETENCE: #id_etape > ETAPE > id, _#id_competence > COMPETENCE > id
+:
+
+:
+REFRESH_TOKENS: token, date_expiration, #id_authentification > AUTHENTIFICATION > id
+:
+CLASSE_UTILISATEUR: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_classe > CLASSE > id
+:
+COURS_UTILISATEUR: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_cours > COURS > id
+:
+COMPETENCE_COURS: #id_cours > COURS > id, _#id_competence > COMPETENCE > id
+:
+ETAPE: id, nom, description, #id_projet > PROJET > id
+:
+
+:
+:
+:
+CLASSE: id, nom
+:
+COURS_CLASSE: #id_classe > CLASSE > id, _#id_cours > COURS > id
+:
+COURS: id, nom, description
+:
+PROJET: id, nom, description, #id_cours > COURS > id
+:

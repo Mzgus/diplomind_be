@@ -41,8 +41,8 @@ pub async fn get_user_sheet_by_id<'e>(
     )
     .bind(id);
 
-    let user_sheet: UserSheet = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "User sheet not found",
+    let user_sheet: UserSheet = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
+        entity: "User sheet",
     })?;
 
     Ok(user_sheet)
