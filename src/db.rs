@@ -16,3 +16,4 @@ pub mod user_courses;
 pub mod course_classes;
 pub mod course_skills;
 pub mod step_skills;
+pub mod skill_validations;

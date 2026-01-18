@@ -234,6 +234,25 @@ pub async fn main() -> Result<(), std::io::Error> {
                     delete(handlers::step_skills::unlink_skill_from_step)
                         .with(JwtAuth::new(token_manager.clone()))
                 )
+                // Skill Validations routes
+                .at("/skill-validations",
+                    post(handlers::skill_validations::create_validation)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                .at("/skill-validations/user/:user_id",
+                    get(handlers::skill_validations::get_user_validations)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                .at("/skill-validations/pending",
+                    get(handlers::skill_validations::get_pending_validations)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                .at("/skill-validations/:user_id/:skill_id",
+                    get(handlers::skill_validations::get_validation)
+                        .patch(handlers::skill_validations::update_validation_status)
+                        .delete(handlers::skill_validations::delete_validation)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
                 .data(pool)
                 .data(token_manager)
                 .with(CookieJarManager::new());
