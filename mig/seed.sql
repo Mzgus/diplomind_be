@@ -2,9 +2,6 @@
 -- This file populates the database with realistic test data
 -- Run this AFTER running 01.sql migration
 
--- Reset sequences to start from 1
-SELECT setval('users_sheets_id_seq', 1, false);
-SELECT setval('users_auth_id_seq', 1, false);
 
 -- ============================================
 -- 1. Users (Students, Teachers, Admins)
@@ -37,8 +34,8 @@ INSERT INTO users_sheets (id, last_name, first_name, type_user, profile_picture,
 -- Authentication for all users (password: "Password123" hashed with Argon2)
 -- Admin
 INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES
-('sophie.martin@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 2),
-('lucas.bernard@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 3);
+('sophie.martin@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 1),
+('lucas.bernard@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 2);
 
 -- Teachers (id 3, 4, 5)
 INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES
@@ -205,8 +202,8 @@ INSERT INTO course_skills (course_id, skill_id) VALUES
 
 -- CDA 2024-2025 (tous les étudiants)
 INSERT INTO user_classes (user_id, class_id) VALUES
-(7, 1), (8, 1), (9, 1), (10, 1), (11, 1),
-(12, 1), (13, 1), (14, 1), (15, 1), (16, 1);
+(6, 1), (7, 1), (8, 1), (9, 1), (10, 1),
+(11, 1), (12, 1), (13, 1), (14, 1), (15, 1);
 
 -- Web Full Stack (quelques étudiants)
 INSERT INTO user_classes (user_id, class_id) VALUES
@@ -262,13 +259,15 @@ INSERT INTO skill_validations (user_id, skill_id, status, validated_at, validate
 -- ============================================
 
 -- Ajuster les séquences pour éviter les conflits d'ID
-SELECT setval('users_sheets_id_seq', (SELECT MAX(id) FROM users_sheets));
-SELECT setval('users_auth_id_seq', (SELECT MAX(id) FROM users_auth));
-SELECT setval('classes_id_seq', (SELECT MAX(id) FROM classes));
-SELECT setval('courses_id_seq', (SELECT MAX(id) FROM courses));
-SELECT setval('skills_id_seq', (SELECT MAX(id) FROM skills));
-SELECT setval('projects_id_seq', (SELECT MAX(id) FROM projects));
-SELECT setval('steps_id_seq', (SELECT MAX(id) FROM steps));
+-- Le troisième paramètre 'true' indique que la valeur a déjà été utilisée
+-- COALESCE garantit qu'on a toujours une valeur même si la table est vide
+SELECT setval('users_sheets_id_seq', COALESCE((SELECT MAX(id) FROM users_sheets), 1), true);
+SELECT setval('users_auth_id_seq', COALESCE((SELECT MAX(id) FROM users_auth), 1), true);
+SELECT setval('classes_id_seq', COALESCE((SELECT MAX(id) FROM classes), 1), true);
+SELECT setval('courses_id_seq', COALESCE((SELECT MAX(id) FROM courses), 1), true);
+SELECT setval('skills_id_seq', COALESCE((SELECT MAX(id) FROM skills), 1), true);
+SELECT setval('projects_id_seq', COALESCE((SELECT MAX(id) FROM projects), 1), true);
+SELECT setval('steps_id_seq', COALESCE((SELECT MAX(id) FROM steps), 1), true);
 
 -- ============================================
 -- Seed completed!

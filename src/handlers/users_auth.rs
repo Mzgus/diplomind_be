@@ -6,7 +6,7 @@ use sqlx::{Pool, Postgres};
 #[poem::handler]
 pub async fn create_user_auth(
     Data(pool): Data<&Pool<Postgres>>,
-    Json(data): Json<CreateUserAuth>,
+    Json(mut data): Json<CreateUserAuth>,
     auth_user: AuthUser, // Requires authentication
 ) -> Result<Json<UserAuthRecord>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
@@ -14,6 +14,22 @@ pub async fn create_user_auth(
     // Validate input
     crate::validators::validate_email(&data.email)?;
     crate::validators::validate_password(&data.pwd)?;
+    
+    // Hash the password before storing
+    use argon2::{
+        password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+        Argon2,
+    };
+    
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::default();
+    let password_hash = argon2
+        .hash_password(data.pwd.as_bytes(), &salt)
+        .map_err(|e| MyError::PasswordHashError(e.to_string()))?
+        .to_string();
+    
+    // Replace plain password with hashed version
+    data.pwd = password_hash;
     
     let user_auth = db::users_auth::create_user_auth(pool, data).await?;
     Ok(Json(user_auth))
