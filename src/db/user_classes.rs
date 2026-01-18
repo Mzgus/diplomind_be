@@ -10,7 +10,6 @@ pub async fn assign_user_to_class<'e>(
         r#"
         INSERT INTO "user_classes" ("user_id", "class_id")
         VALUES ($1, $2)
-        ON CONFLICT (user_id, class_id) DO NOTHING
         RETURNING *
         "#,
     )
@@ -19,6 +18,15 @@ pub async fn assign_user_to_class<'e>(
 
     let user_class: UserClass = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error assigning user to class: {:?}", err);
+        
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "User-Class association",
+                };
+            }
+        }
+        
         MyError::DBErrors {
             entity: "Failed to assign user to class",
         }
@@ -36,7 +44,6 @@ pub async fn get_user_classes<'e>(
         r#"
         SELECT * FROM "user_classes"
         WHERE "user_id" = $1
-        ORDER BY "enrolled_at" DESC
         "#,
     )
     .bind(user_id);
@@ -60,7 +67,6 @@ pub async fn get_class_users<'e>(
         r#"
         SELECT * FROM "user_classes"
         WHERE "class_id" = $1
-        ORDER BY "enrolled_at" DESC
         "#,
     )
     .bind(class_id);

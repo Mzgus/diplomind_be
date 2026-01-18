@@ -115,7 +115,6 @@ CREATE TABLE IF NOT EXISTS skill_validations (
 CREATE TABLE IF NOT EXISTS step_skills (
     step_id INTEGER NOT NULL REFERENCES steps(id) ON DELETE CASCADE,
     skill_id INTEGER NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (step_id, skill_id)
 );
 
@@ -124,7 +123,6 @@ CREATE TABLE IF NOT EXISTS step_skills (
 CREATE TABLE IF NOT EXISTS user_classes (
     user_id INTEGER NOT NULL REFERENCES users_sheets(id) ON DELETE CASCADE,
     class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
-    enrolled_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (user_id, class_id)
 );
 
@@ -133,7 +131,6 @@ CREATE TABLE IF NOT EXISTS user_classes (
 CREATE TABLE IF NOT EXISTS user_courses (
     user_id INTEGER NOT NULL REFERENCES users_sheets(id) ON DELETE CASCADE,
     course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
-    enrolled_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (user_id, course_id)
 );
 
@@ -142,7 +139,6 @@ CREATE TABLE IF NOT EXISTS user_courses (
 CREATE TABLE IF NOT EXISTS course_classes (
     course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
     class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (course_id, class_id)
 );
 
@@ -151,7 +147,6 @@ CREATE TABLE IF NOT EXISTS course_classes (
 CREATE TABLE IF NOT EXISTS course_skills (
     course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
     skill_id INTEGER NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
     PRIMARY KEY (course_id, skill_id)
 );
 

@@ -10,7 +10,6 @@ pub async fn link_skill_to_course<'e>(
         r#"
         INSERT INTO "course_skills" ("course_id", "skill_id")
         VALUES ($1, $2)
-        ON CONFLICT (course_id, skill_id) DO NOTHING
         RETURNING *
         "#,
     )
@@ -19,6 +18,15 @@ pub async fn link_skill_to_course<'e>(
 
     let course_skill: CourseSkill = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error linking skill to course: {:?}", err);
+        
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "Course-Skill association",
+                };
+            }
+        }
+        
         MyError::DBErrors {
             entity: "Failed to link skill to course",
         }
@@ -36,7 +44,6 @@ pub async fn get_course_skills<'e>(
         r#"
         SELECT * FROM "course_skills"
         WHERE "course_id" = $1
-        ORDER BY "created_at" DESC
         "#,
     )
     .bind(course_id);
@@ -60,7 +67,6 @@ pub async fn get_skill_courses<'e>(
         r#"
         SELECT * FROM "course_skills"
         WHERE "skill_id" = $1
-        ORDER BY "created_at" DESC
         "#,
     )
     .bind(skill_id);

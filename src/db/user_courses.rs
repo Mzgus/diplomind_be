@@ -10,7 +10,6 @@ pub async fn assign_user_to_course<'e>(
         r#"
         INSERT INTO "user_courses" ("user_id", "course_id")
         VALUES ($1, $2)
-        ON CONFLICT (user_id, course_id) DO NOTHING
         RETURNING *
         "#,
     )
@@ -19,6 +18,15 @@ pub async fn assign_user_to_course<'e>(
 
     let user_course: UserCourse = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error assigning user to course: {:?}", err);
+        
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "User-Course association",
+                };
+            }
+        }
+        
         MyError::DBErrors {
             entity: "Failed to assign user to course",
         }
@@ -36,7 +44,6 @@ pub async fn get_user_courses<'e>(
         r#"
         SELECT * FROM "user_courses"
         WHERE "user_id" = $1
-        ORDER BY "enrolled_at" DESC
         "#,
     )
     .bind(user_id);
@@ -60,7 +67,6 @@ pub async fn get_course_users<'e>(
         r#"
         SELECT * FROM "user_courses"
         WHERE "course_id" = $1
-        ORDER BY "enrolled_at" DESC
         "#,
     )
     .bind(course_id);

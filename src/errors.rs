@@ -44,6 +44,9 @@ pub enum MyError {
 
     #[error("Password hashing error: {0}")]
     PasswordHashError(String),
+
+    #[error("{entity} already exists")]
+    AlreadyExists { entity: &'static str },
 }
 
 impl poem::error::ResponseError for MyError {
@@ -60,6 +63,7 @@ impl poem::error::ResponseError for MyError {
             Self::InvalidCredentials => StatusCode::UNAUTHORIZED,
             Self::Unauthorized => StatusCode::UNAUTHORIZED,
             Self::PasswordHashError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::AlreadyExists { entity: _ } => StatusCode::CONFLICT,
         }
     }
 }

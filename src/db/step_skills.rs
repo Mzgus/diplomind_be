@@ -10,7 +10,6 @@ pub async fn link_skill_to_step<'e>(
         r#"
         INSERT INTO "step_skills" ("step_id", "skill_id")
         VALUES ($1, $2)
-        ON CONFLICT (step_id, skill_id) DO NOTHING
         RETURNING *
         "#,
     )
@@ -19,6 +18,15 @@ pub async fn link_skill_to_step<'e>(
 
     let step_skill: StepSkill = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error linking skill to step: {:?}", err);
+        
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "Step-Skill association",
+                };
+            }
+        }
+        
         MyError::DBErrors {
             entity: "Failed to link skill to step",
         }
@@ -36,7 +44,6 @@ pub async fn get_step_skills<'e>(
         r#"
         SELECT * FROM "step_skills"
         WHERE "step_id" = $1
-        ORDER BY "created_at" DESC
         "#,
     )
     .bind(step_id);
@@ -60,7 +67,6 @@ pub async fn get_skill_steps<'e>(
         r#"
         SELECT * FROM "step_skills"
         WHERE "skill_id" = $1
-        ORDER BY "created_at" DESC
         "#,
     )
     .bind(skill_id);

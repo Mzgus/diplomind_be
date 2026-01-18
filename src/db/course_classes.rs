@@ -10,7 +10,6 @@ pub async fn link_course_to_class<'e>(
         r#"
         INSERT INTO "course_classes" ("course_id", "class_id")
         VALUES ($1, $2)
-        ON CONFLICT (course_id, class_id) DO NOTHING
         RETURNING *
         "#,
     )
@@ -19,6 +18,16 @@ pub async fn link_course_to_class<'e>(
 
     let course_class: CourseClass = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error linking course to class: {:?}", err);
+        
+        // Check if it's a unique constraint violation
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "Course-Class association",
+                };
+            }
+        }
+        
         MyError::DBErrors {
             entity: "Failed to link course to class",
         }
@@ -36,7 +45,6 @@ pub async fn get_course_classes<'e>(
         r#"
         SELECT * FROM "course_classes"
         WHERE "course_id" = $1
-        ORDER BY "created_at" DESC
         "#,
     )
     .bind(course_id);
@@ -60,7 +68,6 @@ pub async fn get_class_courses<'e>(
         r#"
         SELECT * FROM "course_classes"
         WHERE "class_id" = $1
-        ORDER BY "created_at" DESC
         "#,
     )
     .bind(class_id);
