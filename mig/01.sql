@@ -103,6 +103,7 @@ CREATE TABLE IF NOT EXISTS skill_validations (
     user_id INTEGER NOT NULL REFERENCES users_sheets(id) ON DELETE CASCADE,
     skill_id INTEGER NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
     status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'validated', 'rejected')),
+    comment TEXT, -- Optional comment from teacher/admin
     validated_at TIMESTAMPTZ,
     validated_by INTEGER REFERENCES users_sheets(id), -- Teacher/Admin who validated
     created_at TIMESTAMPTZ DEFAULT NOW(),

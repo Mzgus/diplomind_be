@@ -28,3 +28,5 @@ pub mod course_skills;
 pub use course_skills::*;
 pub mod step_skills;
 pub use step_skills::*;
+pub mod skill_validations;
+pub use skill_validations::*;
