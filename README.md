@@ -432,7 +432,7 @@ UpdateValidationStatus {
 cargo test
 
 # Run specific test file
-cargo test --test skill_validations_test -- --test-threads=1
+cargo test --test <test_name>
 
 # Run with output
 cargo test -- --nocapture
