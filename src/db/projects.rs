@@ -168,3 +168,30 @@ pub async fn delete_project<'e>(
 
     Ok(project)
 }
+
+/// Get all projects for a student (where they are enrolled in the course)
+pub async fn get_student_projects<'e>(
+    executor: impl PgExecutor<'e>,
+    user_id: i32,
+) -> Result<Vec<Project>, MyError> {
+    let query = sqlx::query_as(
+        r#"
+        SELECT p.*
+        FROM projects p
+        JOIN courses c ON p.course_id = c.id
+        JOIN user_courses uc ON c.id = uc.course_id
+        WHERE uc.user_id = $1
+        ORDER BY p.name ASC
+        "#,
+    )
+    .bind(user_id);
+
+    let projects: Vec<Project> = query.fetch_all(executor).await.map_err(|err| {
+        eprintln!("Error fetching student projects: {:?}", err);
+        MyError::DBErrors {
+            entity: "Failed to fetch student projects",
+        }
+    })?;
+
+    Ok(projects)
+}

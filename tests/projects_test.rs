@@ -159,3 +159,25 @@ async fn test_create_project_with_invalid_course() {
     
     assert_eq!(response.status(), 500);
 }
+
+#[tokio::test]
+async fn test_get_student_projects() {
+    let (_, student_token) = get_admin_and_student_tokens().await;
+    let client = reqwest::Client::new();
+
+    // Student 7 is linked to Course 1 (Dev Web)
+    // Project 1 is linked to Course 1
+    // So Student 7 should see Project 1
+    let response = client
+        .get("http://localhost:3000/users/7/projects")
+        .header("Authorization", format!("Bearer {}", student_token))
+        .send().await.unwrap();
+
+    assert_eq!(response.status(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert!(body.is_array());
+    
+    // Should contain at least one project
+    let projects = body.as_array().unwrap();
+    assert!(!projects.is_empty());
+}

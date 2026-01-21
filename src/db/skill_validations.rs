@@ -164,3 +164,25 @@ pub async fn delete_validation<'e>(
         _ => MyError::DBErrors { entity: "skill_validations" },
     })
 }
+
+/// Get validations for a student in a specific course
+pub async fn get_student_course_validations<'e>(
+    executor: impl PgExecutor<'e>,
+    user_id: i32,
+    course_id: i32,
+) -> Result<Vec<crate::models::skill_validations::SkillValidationWithDetails>, MyError> {
+    sqlx::query_as::<Postgres, crate::models::skill_validations::SkillValidationWithDetails>(
+        r#"
+        SELECT sv.*, s.name as skill_name, s.description as skill_description
+        FROM skill_validations sv
+        JOIN skills s ON sv.skill_id = s.id
+        JOIN course_skills cs ON s.id = cs.skill_id
+        WHERE sv.user_id = $1 AND cs.course_id = $2
+        "#,
+    )
+    .bind(user_id)
+    .bind(course_id)
+    .fetch_all(executor)
+    .await
+    .map_err(|_| MyError::DBErrors { entity: "skill_validations" })
+}

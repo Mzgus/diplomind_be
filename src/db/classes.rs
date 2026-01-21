@@ -130,3 +130,30 @@ pub async fn delete_class<'e>(
 
     Ok(class)
 }
+
+/// Get all classes for a teacher (where they teach a course linked to the class)
+pub async fn get_teacher_classes<'e>(
+    executor: impl PgExecutor<'e>,
+    teacher_id: i32,
+) -> Result<Vec<Class>, MyError> {
+    let query = sqlx::query_as(
+        r#"
+        SELECT DISTINCT c.*
+        FROM classes c
+        JOIN course_classes cc ON c.id = cc.class_id
+        JOIN user_courses uc ON cc.course_id = uc.course_id
+        WHERE uc.user_id = $1
+        ORDER BY c.name ASC
+        "#,
+    )
+    .bind(teacher_id);
+
+    let classes: Vec<Class> = query.fetch_all(executor).await.map_err(|err| {
+        eprintln!("Error fetching teacher classes: {:?}", err);
+        MyError::DBErrors {
+            entity: "Failed to fetch teacher classes",
+        }
+    })?;
+
+    Ok(classes)
+}

@@ -280,3 +280,28 @@ async fn test_teacher_cannot_delete() {
     
     assert_eq!(response.status(), 401);
 }
+
+#[tokio::test]
+async fn test_get_student_course_validations() {
+    let (_, student_token) = get_admin_and_student_tokens().await;
+    let client = reqwest::Client::new();
+
+    // Get validations for student 7 in course 1
+    // Based on seed data, student 7 is in course 1
+    let response = client
+        .get("http://localhost:3000/users/7/courses/1/validations")
+        .header("Authorization", format!("Bearer {}", student_token))
+        .send().await.unwrap();
+
+    assert_eq!(response.status(), 200);
+    let body: serde_json::Value = response.json().await.unwrap();
+    assert!(body.is_array());
+    
+    let validations = body.as_array().unwrap();
+    if !validations.is_empty() {
+        let v = &validations[0];
+        // Check for enriched fields
+        assert!(v.get("skill_name").is_some());
+        assert!(v.get("skill_description").is_some());
+    }
+}

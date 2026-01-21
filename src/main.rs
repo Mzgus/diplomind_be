@@ -133,6 +133,11 @@ pub async fn main() -> Result<(), std::io::Error> {
                     get(handlers::projects::get_projects_by_course)
                         .with(JwtAuth::new(token_manager.clone()))
                 )
+                // Student Dashboard: Get my projects
+                .at("/users/:id/projects",
+                    get(handlers::projects::get_student_projects)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
                 // Steps routes
                 .at("/steps",
                     get(handlers::steps::get_all_steps)
@@ -158,6 +163,11 @@ pub async fn main() -> Result<(), std::io::Error> {
                     get(handlers::user_classes::get_user_classes)
                         .with(JwtAuth::new(token_manager.clone()))
                 )
+                // Teacher Dashboard: Get my classes
+                .at("/teachers/:id/classes",
+                    get(handlers::classes::get_teacher_classes)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
                 .at("/classes/:id/users",
                     get(handlers::user_classes::get_class_users)
                         .with(JwtAuth::new(token_manager.clone()))
@@ -181,6 +191,11 @@ pub async fn main() -> Result<(), std::io::Error> {
                 )
                 .at("/users/:user_id/courses/:course_id",
                     delete(handlers::user_courses::remove_user_from_course)
+                        .with(JwtAuth::new(token_manager.clone()))
+                )
+                // Student Dashboard: Get validations for a course
+                .at("/users/:user_id/courses/:course_id/validations",
+                     get(handlers::skill_validations::get_student_course_validations)
                         .with(JwtAuth::new(token_manager.clone()))
                 )
                 // Course-Classes association routes

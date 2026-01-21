@@ -100,3 +100,25 @@ pub async fn delete_validation(
     let validation = db::skill_validations::delete_validation(pool, user_id, skill_id).await?;
     Ok(Json(validation))
 }
+
+/// Get validations for a student in a specific course
+#[poem::handler]
+pub async fn get_student_course_validations(
+    Data(pool): Data<&Pool<Postgres>>,
+    Path((user_id, course_id)): Path<(i32, i32)>,
+    auth_user: AuthUser,
+) -> Result<Json<Vec<SkillValidationWithDetails>>, MyError> {
+    // RBAC:
+    // - Students can only view their own
+    // - Teachers/Admins can view any
+    let role = &auth_user.0.user_role;
+    let auth_id = auth_user.0.user_id;
+
+    if role == "student" && auth_id != user_id {
+        return Err(MyError::Unauthorized);
+    }
+    // For teachers/admins, access is allowed.
+
+    let validations = db::skill_validations::get_student_course_validations(pool, user_id, course_id).await?;
+    Ok(Json(validations))
+}

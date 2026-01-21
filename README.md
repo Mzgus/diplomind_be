@@ -16,9 +16,9 @@ Diplomind is an educational platform designed to manage student skill acquisitio
 - **Framework**: Poem
 - **Database**: PostgreSQL
 - **SQL query handler**: SQLx
-- **Authentication**: 
-    - Access token : Some user informations stored in a JsonWebToken of short validity in the localstorage.
-    - Refresh token : Base64-encoded string representing 32 bytes (256 bits) of cryptographically random data stored in the cookie defined in the ".env" file and in the database.
+- **Authentication**:
+  - Access token : Some user informations stored in a JsonWebToken of short validity in the localstorage.
+  - Refresh token : Base64-encoded string representing 32 bytes (256 bits) of cryptographically random data stored in the cookie defined in the ".env" file and in the database.
 - **Password Hashing Algorithm**: Argon2
 
 ## Getting Started
@@ -32,27 +32,34 @@ Diplomind is an educational platform designed to manage student skill acquisitio
 ### Installation
 
 #### Clone the repository
+
 ```bash
 git clone https://github.com/Mzgus/diplomind_be.git
 cd diplomind_be
 ```
 
 #### Configure environment
+
 ```bash
 cp .env.template .env
-``` 
+```
+
 Edit .env with all your informations
 
 #### Initialize database
+
 ```bash
 just reboot
 ```
+
 or
+
 ```bash
 docker compose down && docker volume rm diplomind && docker compose up -d
 ```
 
 #### Run the server
+
 ```bash
 cargo run
 ```
@@ -65,11 +72,11 @@ The API will be available at `http://localhost:3000`.
 
 The API implements three user roles with distinct permissions:
 
-| Role        | Permissions                                                            |
-| ----------- | ---------------------------------------------------------------------- |
-| **admin**   | Full access to all resources, user management, security controls       |
+| Role        | Permissions                                                      |
+| ----------- | ---------------------------------------------------------------- |
+| **admin**   | Full access to all resources, user management, security controls |
 | **teacher** | Manage courses, projects, steps, skills; validate student skills |
-| **student** | View own profile, courses, and skill validations (read-only)           |
+| **student** | View own profile, courses, and skill validations (read-only)     |
 
 ---
 
@@ -128,13 +135,14 @@ All protected routes require a valid JWT token in the `Authorization: Bearer <to
 
 **User Story**: As an administrator, I need to organize students into classes for course assignment and tracking.
 
-| Method | Route          | Description             | Auth    |
-| ------ | -------------- | ----------------------- | ------- |
-| GET    | `/classes`     | List all classes        | Teacher |
-| POST   | `/classes`     | Create class            | Admin   |
-| GET    | `/classes/:id` | Get class details by ID | Teacher |
-| PUT    | `/classes/:id` | Update class            | Admin   |
-| DELETE | `/classes/:id` | Delete class            | Admin   |
+| Method | Route                   | Description             | Auth                    |
+| ------ | ----------------------- | ----------------------- | ----------------------- |
+| GET    | `/classes`              | List all classes        | Teacher                 |
+| POST   | `/classes`              | Create class            | Admin                   |
+| GET    | `/classes/:id`          | Get class details by ID | Teacher                 |
+| PUT    | `/classes/:id`          | Update class            | Admin                   |
+| DELETE | `/classes/:id`          | Delete class            | Admin                   |
+| GET    | `/teachers/:id/classes` | Get teacher's classes   | Teacher (Self) or Admin |
 
 ---
 
@@ -170,14 +178,15 @@ All protected routes require a valid JWT token in the `Authorization: Bearer <to
 
 **User Story**: As a teacher, I need to create and manage projects within courses that allow students to demonstrate skills.
 
-| Method | Route                   | Description               | Auth    |
-| ------ | ----------------------- | ------------------------- | ------- |
-| GET    | `/projects`             | List all projects         | Student |
-| POST   | `/projects`             | Create project            | Teacher |
-| GET    | `/projects/:id`         | Get project details by ID | Student |
-| PUT    | `/projects/:id`         | Update project            | Teacher |
-| DELETE | `/projects/:id`         | Delete project            | Teacher |
-| GET    | `/courses/:id/projects` | List projects by course   | Student |
+| Method | Route                   | Description               | Auth                      |
+| ------ | ----------------------- | ------------------------- | ------------------------- |
+| GET    | `/projects`             | List all projects         | Student                   |
+| POST   | `/projects`             | Create project            | Teacher                   |
+| GET    | `/projects/:id`         | Get project details by ID | Student                   |
+| PUT    | `/projects/:id`         | Update project            | Teacher                   |
+| DELETE | `/projects/:id`         | Delete project            | Teacher                   |
+| GET    | `/courses/:id/projects` | List projects by course   | Student                   |
+| GET    | `/users/:id/projects`   | Get student's projects    | Student (Self) or Teacher |
 
 ---
 
@@ -265,14 +274,17 @@ All protected routes require a valid JWT token in the `Authorization: Bearer <to
 
 **User Story**: As a teacher, I need to validate student skills and provide feedback to track their progression.
 
-| Method | Route                                   | Description              | Auth    |
-| ------ | --------------------------------------- | ------------------------ | ------- |
-| POST   | `/skill-validations`                    | Create validation record | Teacher |
-| GET    | `/skill-validations/user/:user_id`      | Get user's validations   | Student |
-| GET    | `/skill-validations/pending`            | List pending validations | Teacher |
-| GET    | `/skill-validations/:user_id/:skill_id` | Get validation details   | Student |
-| PATCH  | `/skill-validations/:user_id/:skill_id` | Update validation status | Teacher |
-| DELETE | `/skill-validations/:user_id/:skill_id` | Delete validation        | Admin   |
+| Method | Route                                            | Description                        | Auth                      |
+| ------ | ------------------------------------------------ | ---------------------------------- | ------------------------- |
+| POST   | `/skill-validations`                             | Create validation record           | Teacher                   |
+| GET    | `/skill-validations/user/:user_id`               | Get user's validations             | Student                   |
+| GET    | `/skill-validations/pending`                     | List pending validations           | Teacher                   |
+| GET    | `/skill-validations/:user_id/:skill_id`          | Get validation details             | Student                   |
+| PATCH  | `/skill-validations/:user_id/:skill_id`          | Update validation status           | Teacher                   |
+| DELETE | `/skill-validations/:user_id/:skill_id`          | Delete validation                  | Admin                     |
+| GET    | `/users/:user_id/courses/:course_id/validations` | Get student validations for course | Student (Self) or Teacher |
+
+---
 
 ---
 
@@ -282,8 +294,8 @@ All protected routes require a valid JWT token in the `Authorization: Bearer <to
 
 ```rust
 LoginRequest {
-    email: String, 
-    pwd: String 
+    email: String,
+    pwd: String
 }
 
 AuthTokenResponse {
@@ -297,7 +309,7 @@ AuthTokenResponse {
 ```rust
 CreateUserSheet {
     nom: String,
-    prenom: String, 
+    prenom: String,
     type_user: String,
     avatar: Option<String>
 }
