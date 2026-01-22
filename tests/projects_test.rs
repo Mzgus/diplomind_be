@@ -5,7 +5,7 @@ use common::*;
 async fn test_create_project_as_admin() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .post("http://localhost:3000/projects")
         .header("Authorization", format!("Bearer {}", admin_token))
@@ -17,7 +17,7 @@ async fn test_create_project_as_admin() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["name"], "Test Project");
@@ -28,7 +28,7 @@ async fn test_create_project_as_admin() {
 async fn test_create_project_as_teacher() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .post("http://localhost:3000/projects")
         .header("Authorization", format!("Bearer {}", teacher_token))
@@ -39,7 +39,7 @@ async fn test_create_project_as_teacher() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
 }
 
@@ -47,14 +47,14 @@ async fn test_create_project_as_teacher() {
 async fn test_get_project_by_id() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .get("http://localhost:3000/projects/1")
         .header("Authorization", format!("Bearer {}", admin_token))
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["id"], 1);
@@ -64,14 +64,14 @@ async fn test_get_project_by_id() {
 async fn test_get_all_projects() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .get("http://localhost:3000/projects")
         .header("Authorization", format!("Bearer {}", admin_token))
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body.is_array());
@@ -81,14 +81,14 @@ async fn test_get_all_projects() {
 async fn test_get_projects_by_course() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .get("http://localhost:3000/courses/1/projects")
         .header("Authorization", format!("Bearer {}", admin_token))
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body.is_array());
@@ -98,7 +98,7 @@ async fn test_get_projects_by_course() {
 async fn test_update_project_as_teacher() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .put("http://localhost:3000/projects/1")
         .header("Authorization", format!("Bearer {}", teacher_token))
@@ -108,7 +108,7 @@ async fn test_update_project_as_teacher() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
 }
 
@@ -116,7 +116,7 @@ async fn test_update_project_as_teacher() {
 async fn test_delete_project_as_admin() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let create_response = client
         .post("http://localhost:3000/projects")
         .header("Authorization", format!("Bearer {}", admin_token))
@@ -127,17 +127,17 @@ async fn test_delete_project_as_admin() {
         .send()
         .await
         .unwrap();
-    
+
     let created: serde_json::Value = create_response.json().await.unwrap();
     let project_id = created["id"].as_i64().unwrap();
-    
+
     let response = client
         .delete(format!("http://localhost:3000/projects/{}", project_id))
         .header("Authorization", format!("Bearer {}", admin_token))
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
 }
 
@@ -145,7 +145,7 @@ async fn test_delete_project_as_admin() {
 async fn test_create_project_with_invalid_course() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .post("http://localhost:3000/projects")
         .header("Authorization", format!("Bearer {}", admin_token))
@@ -156,7 +156,7 @@ async fn test_create_project_with_invalid_course() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 500);
 }
 
@@ -171,12 +171,14 @@ async fn test_get_student_projects() {
     let response = client
         .get("http://localhost:3000/users/7/projects")
         .header("Authorization", format!("Bearer {}", student_token))
-        .send().await.unwrap();
+        .send()
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body.is_array());
-    
+
     // Should contain at least one project
     let projects = body.as_array().unwrap();
     assert!(!projects.is_empty());

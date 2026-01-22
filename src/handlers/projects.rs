@@ -1,4 +1,9 @@
-use crate::{db, errors::MyError, middleware::{self, jwt_auth::AuthUser}, models::projects::*};
+use crate::{
+    db,
+    errors::MyError,
+    middleware::{self, jwt_auth::AuthUser},
+    models::projects::*,
+};
 use poem::web::{Data, Json, Path};
 use sqlx::{Pool, Postgres};
 
@@ -12,7 +17,7 @@ pub async fn create_project(
     if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
         return Err(MyError::Unauthorized);
     }
-    
+
     let project = db::projects::create_project(pool, data).await?;
     Ok(Json(project))
 }
@@ -60,7 +65,7 @@ pub async fn update_project(
     if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
         return Err(MyError::Unauthorized);
     }
-    
+
     let project = db::projects::update_project(pool, id, data).await?;
     Ok(Json(project))
 }
@@ -73,7 +78,7 @@ pub async fn delete_project(
     auth_user: AuthUser,
 ) -> Result<Json<Project>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let project = db::projects::delete_project(pool, id).await?;
     Ok(Json(project))
 }

@@ -40,9 +40,13 @@ pub async fn get_user_auth_by_id<'e>(
     )
     .bind(id);
 
-    let user_auth: UserAuthRecord = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "User auth not found",
-    })?;
+    let user_auth: UserAuthRecord =
+        query
+            .fetch_one(executor)
+            .await
+            .map_err(|_| MyError::DBErrors {
+                entity: "User auth not found",
+            })?;
 
     Ok(user_auth)
 }
@@ -60,9 +64,13 @@ pub async fn get_user_auth_by_email<'e>(
     )
     .bind(email);
 
-    let user_auth: UserAuthRecord = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "User auth not found",
-    })?;
+    let user_auth: UserAuthRecord =
+        query
+            .fetch_one(executor)
+            .await
+            .map_err(|_| MyError::DBErrors {
+                entity: "User auth not found",
+            })?;
 
     Ok(user_auth)
 }
@@ -135,9 +143,13 @@ pub async fn delete_user_auth<'e>(
     )
     .bind(id);
 
-    let user_auth: UserAuthRecord = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "Failed to delete user auth",
-    })?;
+    let user_auth: UserAuthRecord =
+        query
+            .fetch_one(executor)
+            .await
+            .map_err(|_| MyError::DBErrors {
+                entity: "Failed to delete user auth",
+            })?;
 
     Ok(user_auth)
 }

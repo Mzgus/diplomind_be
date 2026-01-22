@@ -27,10 +27,7 @@ pub async fn create_skill<'e>(
 }
 
 /// Get a skill by ID
-pub async fn get_skill_by_id<'e>(
-    executor: impl PgExecutor<'e>,
-    id: i32,
-) -> Result<Skill, MyError> {
+pub async fn get_skill_by_id<'e>(executor: impl PgExecutor<'e>, id: i32) -> Result<Skill, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT * FROM "skills"
@@ -39,17 +36,16 @@ pub async fn get_skill_by_id<'e>(
     )
     .bind(id);
 
-    let skill: Skill = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Skill",
-    })?;
+    let skill: Skill = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Skill" })?;
 
     Ok(skill)
 }
 
 /// Get all skills
-pub async fn get_all_skills<'e>(
-    executor: impl PgExecutor<'e>,
-) -> Result<Vec<Skill>, MyError> {
+pub async fn get_all_skills<'e>(executor: impl PgExecutor<'e>) -> Result<Vec<Skill>, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT * FROM "skills"
@@ -91,7 +87,7 @@ pub async fn update_skill<'e>(
         });
     }
 
-    query_parts.push(format!("\"updated_at\" = NOW()"));
+    query_parts.push("\"updated_at\" = NOW()".to_string());
 
     let query_str = format!(
         r#"UPDATE "skills" SET {} WHERE "id" = ${} RETURNING *"#,
@@ -109,18 +105,16 @@ pub async fn update_skill<'e>(
     }
     query = query.bind(id);
 
-    let skill: Skill = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Skill",
-    })?;
+    let skill: Skill = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Skill" })?;
 
     Ok(skill)
 }
 
 /// Delete a skill by ID
-pub async fn delete_skill<'e>(
-    executor: impl PgExecutor<'e>,
-    id: i32,
-) -> Result<Skill, MyError> {
+pub async fn delete_skill<'e>(executor: impl PgExecutor<'e>, id: i32) -> Result<Skill, MyError> {
     let query = sqlx::query_as(
         r#"
         DELETE FROM "skills"
@@ -130,9 +124,10 @@ pub async fn delete_skill<'e>(
     )
     .bind(id);
 
-    let skill: Skill = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Skill",
-    })?;
+    let skill: Skill = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Skill" })?;
 
     Ok(skill)
 }

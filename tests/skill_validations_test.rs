@@ -5,7 +5,7 @@ use common::*;
 async fn test_create_validation_as_teacher() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     // Create validation with comment - User 6 has no validations in seed
     let response = client
         .post("http://localhost:3000/skill-validations")
@@ -16,8 +16,10 @@ async fn test_create_validation_as_teacher() {
             "status": "pending",
             "comment": "À valider après le projet"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["user_id"], 6);
@@ -30,7 +32,7 @@ async fn test_create_validation_as_teacher() {
 async fn test_student_cannot_create_validation() {
     let (_, student_token) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .post("http://localhost:3000/skill-validations")
         .header("Authorization", format!("Bearer {}", student_token))
@@ -39,8 +41,10 @@ async fn test_student_cannot_create_validation() {
             "skill_id": 5,
             "status": "pending"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 401);
 }
 
@@ -48,7 +52,7 @@ async fn test_student_cannot_create_validation() {
 async fn test_create_duplicate_validation() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     // Create first validation - User 11 has no validations in seed
     let first_response = client
         .post("http://localhost:3000/skill-validations")
@@ -58,10 +62,12 @@ async fn test_create_duplicate_validation() {
             "skill_id": 2,
             "status": "pending"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(first_response.status(), 200);
-    
+
     // Try to create duplicate - should fail with 409
     let response = client
         .post("http://localhost:3000/skill-validations")
@@ -71,8 +77,10 @@ async fn test_create_duplicate_validation() {
             "skill_id": 2,
             "status": "validated"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 409); // CONFLICT
 }
 
@@ -80,13 +88,15 @@ async fn test_create_duplicate_validation() {
 async fn test_get_user_validations() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     // Get validations for user 7 (has validations in seed data)
     let response = client
         .get("http://localhost:3000/skill-validations/user/7")
         .header("Authorization", format!("Bearer {}", teacher_token))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body.is_array());
@@ -97,12 +107,14 @@ async fn test_get_user_validations() {
 async fn test_get_pending_validations_as_teacher() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .get("http://localhost:3000/skill-validations/pending")
         .header("Authorization", format!("Bearer {}", teacher_token))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body.is_array());
@@ -112,12 +124,14 @@ async fn test_get_pending_validations_as_teacher() {
 async fn test_student_cannot_access_pending() {
     let (_, student_token) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .get("http://localhost:3000/skill-validations/pending")
         .header("Authorization", format!("Bearer {}", student_token))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 401);
 }
 
@@ -125,7 +139,7 @@ async fn test_student_cannot_access_pending() {
 async fn test_validate_skill_as_teacher() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     // Create a pending validation first - User 12 has no validations in seed
     let create_response = client
         .post("http://localhost:3000/skill-validations")
@@ -135,10 +149,12 @@ async fn test_validate_skill_as_teacher() {
             "skill_id": 3,
             "status": "pending"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(create_response.status(), 200);
-    
+
     // Validate it with comment
     let response = client
         .patch("http://localhost:3000/skill-validations/12/3")
@@ -147,8 +163,10 @@ async fn test_validate_skill_as_teacher() {
             "status": "validated",
             "comment": "Excellent travail !"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["status"], "validated");
@@ -161,7 +179,7 @@ async fn test_validate_skill_as_teacher() {
 async fn test_reject_skill_as_teacher() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     // Create a pending validation first - User 13 has no validations in seed
     let create_response = client
         .post("http://localhost:3000/skill-validations")
@@ -171,10 +189,12 @@ async fn test_reject_skill_as_teacher() {
             "skill_id": 6,
             "status": "pending"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(create_response.status(), 200);
-    
+
     // Reject it with comment
     let response = client
         .patch("http://localhost:3000/skill-validations/13/6")
@@ -183,8 +203,10 @@ async fn test_reject_skill_as_teacher() {
             "status": "rejected",
             "comment": "Nécessite plus de pratique"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["status"], "rejected");
@@ -195,7 +217,7 @@ async fn test_reject_skill_as_teacher() {
 async fn test_student_cannot_validate() {
     let (_, student_token) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     // Try to update a validation from seed (user 7, skill 6 is pending)
     let response = client
         .patch("http://localhost:3000/skill-validations/7/6")
@@ -203,8 +225,10 @@ async fn test_student_cannot_validate() {
         .json(&serde_json::json!({
             "status": "validated"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 401);
 }
 
@@ -212,13 +236,15 @@ async fn test_student_cannot_validate() {
 async fn test_get_validation_details() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     // Get details of an existing validation from seed (user 7, skill 1)
     let response = client
         .get("http://localhost:3000/skill-validations/7/1")
         .header("Authorization", format!("Bearer {}", teacher_token))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["user_id"], 7);
@@ -231,7 +257,7 @@ async fn test_delete_validation_as_admin() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     // Create a validation first - User 14 has no validations in seed
     let create_response = client
         .post("http://localhost:3000/skill-validations")
@@ -241,16 +267,20 @@ async fn test_delete_validation_as_admin() {
             "skill_id": 7,
             "status": "pending"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(create_response.status(), 200);
-    
+
     // Delete as admin
     let response = client
         .delete("http://localhost:3000/skill-validations/14/7")
         .header("Authorization", format!("Bearer {}", admin_token))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 200);
 }
 
@@ -258,7 +288,7 @@ async fn test_delete_validation_as_admin() {
 async fn test_teacher_cannot_delete() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     // Create a validation first - User 15 has no validations in seed
     let create_response = client
         .post("http://localhost:3000/skill-validations")
@@ -268,16 +298,20 @@ async fn test_teacher_cannot_delete() {
             "skill_id": 8,
             "status": "pending"
         }))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(create_response.status(), 200);
-    
+
     // Try to delete as teacher - should fail
     let response = client
         .delete("http://localhost:3000/skill-validations/15/8")
         .header("Authorization", format!("Bearer {}", teacher_token))
-        .send().await.unwrap();
-    
+        .send()
+        .await
+        .unwrap();
+
     assert_eq!(response.status(), 401);
 }
 
@@ -291,12 +325,14 @@ async fn test_get_student_course_validations() {
     let response = client
         .get("http://localhost:3000/users/7/courses/1/validations")
         .header("Authorization", format!("Bearer {}", student_token))
-        .send().await.unwrap();
+        .send()
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body.is_array());
-    
+
     let validations = body.as_array().unwrap();
     if !validations.is_empty() {
         let v = &validations[0];

@@ -5,7 +5,7 @@ use common::*;
 async fn test_create_step_as_admin() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .post("http://localhost:3000/steps")
         .header("Authorization", format!("Bearer {}", admin_token))
@@ -18,7 +18,7 @@ async fn test_create_step_as_admin() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["name"], "Test Step");
@@ -30,7 +30,7 @@ async fn test_create_step_as_admin() {
 async fn test_create_step_as_teacher() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .post("http://localhost:3000/steps")
         .header("Authorization", format!("Bearer {}", teacher_token))
@@ -41,7 +41,7 @@ async fn test_create_step_as_teacher() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
 }
 
@@ -49,14 +49,14 @@ async fn test_create_step_as_teacher() {
 async fn test_get_step_by_id() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .get("http://localhost:3000/steps/1")
         .header("Authorization", format!("Bearer {}", admin_token))
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["id"], 1);
@@ -66,14 +66,14 @@ async fn test_get_step_by_id() {
 async fn test_get_all_steps() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .get("http://localhost:3000/steps")
         .header("Authorization", format!("Bearer {}", admin_token))
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body.is_array());
@@ -83,14 +83,14 @@ async fn test_get_all_steps() {
 async fn test_get_steps_by_project() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .get("http://localhost:3000/projects/1/steps")
         .header("Authorization", format!("Bearer {}", admin_token))
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body.is_array());
@@ -100,7 +100,7 @@ async fn test_get_steps_by_project() {
 async fn test_update_step_order() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .put("http://localhost:3000/steps/1")
         .header("Authorization", format!("Bearer {}", admin_token))
@@ -110,7 +110,7 @@ async fn test_update_step_order() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["step_order"], 99);
@@ -120,7 +120,7 @@ async fn test_update_step_order() {
 async fn test_update_step_as_teacher() {
     let teacher_token = get_teacher_token().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .put("http://localhost:3000/steps/1")
         .header("Authorization", format!("Bearer {}", teacher_token))
@@ -130,7 +130,7 @@ async fn test_update_step_as_teacher() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
 }
 
@@ -138,7 +138,7 @@ async fn test_update_step_as_teacher() {
 async fn test_delete_step_as_admin() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let create_response = client
         .post("http://localhost:3000/steps")
         .header("Authorization", format!("Bearer {}", admin_token))
@@ -149,17 +149,17 @@ async fn test_delete_step_as_admin() {
         .send()
         .await
         .unwrap();
-    
+
     let created: serde_json::Value = create_response.json().await.unwrap();
     let step_id = created["id"].as_i64().unwrap();
-    
+
     let response = client
         .delete(format!("http://localhost:3000/steps/{}", step_id))
         .header("Authorization", format!("Bearer {}", admin_token))
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
 }
 
@@ -167,7 +167,7 @@ async fn test_delete_step_as_admin() {
 async fn test_create_step_with_invalid_project() {
     let (admin_token, _) = get_admin_and_student_tokens().await;
     let client = reqwest::Client::new();
-    
+
     let response = client
         .post("http://localhost:3000/steps")
         .header("Authorization", format!("Bearer {}", admin_token))
@@ -178,6 +178,6 @@ async fn test_create_step_with_invalid_project() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 500);
 }

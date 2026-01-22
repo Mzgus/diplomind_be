@@ -1,4 +1,9 @@
-use crate::{db, errors::MyError, middleware::{self, jwt_auth::AuthUser}, models::*};
+use crate::{
+    db,
+    errors::MyError,
+    middleware::{self, jwt_auth::AuthUser},
+    models::*,
+};
 use poem::web::{Data, Json, Path};
 use sqlx::{Pool, Postgres};
 
@@ -11,11 +16,11 @@ pub async fn create_user_sheet(
 ) -> Result<Json<UserSheet>, MyError> {
     // Only admin can create user sheets (or maybe anyone if public registration? typically self or admin)
     // For now, let's restrict creation to admin or maybe allow it for registration flow?
-    // Assuming admin creates users or users register themselves. If users register themselves, 
+    // Assuming admin creates users or users register themselves. If users register themselves,
     // the endpoint might need to be public or we assume they are already auth?
     // Let's assume for now admin only for explicit creation via this API.
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let user_sheet = db::users_sheets::create_user_sheet(pool, data).await?;
     Ok(Json(user_sheet))
 }

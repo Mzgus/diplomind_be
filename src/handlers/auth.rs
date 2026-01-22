@@ -19,17 +19,17 @@ pub async fn login(
         Err(err) => return Err(err),
     };
     // Check if user is active
-    if let Some(active) = user_info.user_active {
-        if !active {
-            return Err(errors::MyError::Unauthorized);
-        }
+    if let Some(active) = user_info.user_active
+        && !active
+    {
+        return Err(errors::MyError::Unauthorized);
     }
     // Verify password using Argon2
     let password_valid = match auth::verify_password(&user_auth.pwd, &user_info.user_pwd) {
         Ok(valid) => valid,
         Err(err) => return Err(err),
     };
-    
+
     if !password_valid {
         return Err(errors::MyError::InvalidCredentials);
     }
@@ -111,12 +111,12 @@ pub async fn logout(
         Ok(res) => res,
         Err(_) => return Ok(()),
     };
-     // If no cookie, just return ok (already logged out conceptually)
-     println!("token: {}", token);
+    // If no cookie, just return ok (already logged out conceptually)
+    println!("token: {}", token);
     if !token.is_empty() {
         let _ = db::auth::delete_refresh_token(executor, token).await;
     }
-    
+
     token_manager.clear_cookie(cookie_jar);
     Ok(())
 }

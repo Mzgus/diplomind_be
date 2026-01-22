@@ -1,9 +1,9 @@
 pub mod db;
 pub mod errors;
-pub mod models;
-pub mod services;
 pub mod handlers;
 pub mod middleware;
+pub mod models;
+pub mod services;
 pub mod validators;
 pub use errors::*;
 pub use models::*;

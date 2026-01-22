@@ -1,4 +1,9 @@
-use crate::{db, errors::MyError, middleware::{self, jwt_auth::AuthUser}, models::steps::*};
+use crate::{
+    db,
+    errors::MyError,
+    middleware::{self, jwt_auth::AuthUser},
+    models::steps::*,
+};
 use poem::web::{Data, Json, Path};
 use sqlx::{Pool, Postgres};
 
@@ -12,7 +17,7 @@ pub async fn create_step(
     if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
         return Err(MyError::Unauthorized);
     }
-    
+
     let step = db::steps::create_step(pool, data).await?;
     Ok(Json(step))
 }
@@ -60,7 +65,7 @@ pub async fn update_step(
     if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
         return Err(MyError::Unauthorized);
     }
-    
+
     let step = db::steps::update_step(pool, id, data).await?;
     Ok(Json(step))
 }
@@ -73,7 +78,7 @@ pub async fn delete_step(
     auth_user: AuthUser,
 ) -> Result<Json<Step>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let step = db::steps::delete_step(pool, id).await?;
     Ok(Json(step))
 }

@@ -55,7 +55,9 @@ just reboot
 or
 
 ```bash
-docker compose down && docker volume rm diplomind && docker compose up -d
+docker compose down 
+docker volume rm diplomind
+docker compose up -d
 ```
 
 #### Run the server

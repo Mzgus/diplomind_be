@@ -2,8 +2,8 @@ use crate::MyError;
 use crate::db;
 use crate::{errors, models};
 use argon2::{
-    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
+    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},
 };
 use base64::prelude::*;
 use chrono::DateTime;
@@ -19,21 +19,21 @@ use sqlx::*;
 pub fn hash_password(password: &str) -> Result<String, errors::MyError> {
     let salt = SaltString::generate(&mut OsRng);
     let argon2 = Argon2::default();
-    
+
     let password_hash = argon2
         .hash_password(password.as_bytes(), &salt)
         .map_err(|e| errors::MyError::PasswordHashError(e.to_string()))?;
-    
+
     Ok(password_hash.to_string())
 }
 
 /// Verify a password against a hash using Argon2
 pub fn verify_password(password: &str, hash: &str) -> Result<bool, errors::MyError> {
-    let parsed_hash = PasswordHash::new(hash)
-        .map_err(|e| errors::MyError::PasswordHashError(e.to_string()))?;
-    
+    let parsed_hash =
+        PasswordHash::new(hash).map_err(|e| errors::MyError::PasswordHashError(e.to_string()))?;
+
     let argon2 = Argon2::default();
-    
+
     match argon2.verify_password(password.as_bytes(), &parsed_hash) {
         Ok(_) => Ok(true),
         Err(_) => Ok(false),
@@ -170,7 +170,8 @@ impl TokenManager {
         // enregistrer le refresh d ans la db
         let exp: DateTime<Utc> = self.generate_expiration_date(chrono::Duration::weeks(2));
 
-        match db::create_refresh_token(executor, user_auth_id, refresh_token.to_owned(), exp).await {
+        match db::create_refresh_token(executor, user_auth_id, refresh_token.to_owned(), exp).await
+        {
             Ok(_) => {}
             Err(err) => return Err(err),
         };
@@ -179,4 +180,3 @@ impl TokenManager {
         Ok(())
     }
 }
-

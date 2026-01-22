@@ -119,7 +119,7 @@ pub async fn update_project<'e>(
         });
     }
 
-    query_parts.push(format!("\"updated_at\" = NOW()"));
+    query_parts.push("\"updated_at\" = NOW()".to_string());
 
     let query_str = format!(
         r#"UPDATE "projects" SET {} WHERE "id" = ${} RETURNING *"#,

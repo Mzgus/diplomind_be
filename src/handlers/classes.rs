@@ -1,4 +1,9 @@
-use crate::{db, errors::MyError, middleware::{self, jwt_auth::AuthUser}, models::classes::*};
+use crate::{
+    db,
+    errors::MyError,
+    middleware::{self, jwt_auth::AuthUser},
+    models::classes::*,
+};
 use poem::web::{Data, Json, Path};
 use sqlx::{Pool, Postgres};
 
@@ -10,7 +15,7 @@ pub async fn create_class(
     auth_user: AuthUser,
 ) -> Result<Json<Class>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let class = db::classes::create_class(pool, data).await?;
     Ok(Json(class))
 }
@@ -45,7 +50,7 @@ pub async fn update_class(
     auth_user: AuthUser,
 ) -> Result<Json<Class>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let class = db::classes::update_class(pool, id, data).await?;
     Ok(Json(class))
 }
@@ -58,7 +63,7 @@ pub async fn delete_class(
     auth_user: AuthUser,
 ) -> Result<Json<Class>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let class = db::classes::delete_class(pool, id).await?;
     Ok(Json(class))
 }

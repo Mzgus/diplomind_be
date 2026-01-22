@@ -47,20 +47,20 @@ pub async fn get_user_validations<'e>(
         "#,
     );
 
-    if let Some(f) = &filter {
-        if f.status.is_some() {
-            query_str.push_str(" AND status = $2");
-        }
+    if let Some(f) = &filter
+        && f.status.is_some()
+    {
+        query_str.push_str(" AND status = $2");
     }
 
     query_str.push_str(" ORDER BY created_at DESC");
 
     let mut query = sqlx::query_as::<Postgres, SkillValidation>(&query_str).bind(user_id);
 
-    if let Some(f) = filter {
-        if let Some(status) = f.status {
-            query = query.bind(status);
-        }
+    if let Some(f) = filter
+        && let Some(status) = f.status
+    {
+        query = query.bind(status);
     }
 
     query

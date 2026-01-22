@@ -39,17 +39,16 @@ pub async fn get_course_by_id<'e>(
     )
     .bind(id);
 
-    let course: Course = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Course",
-    })?;
+    let course: Course = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Course" })?;
 
     Ok(course)
 }
 
 /// Get all courses
-pub async fn get_all_courses<'e>(
-    executor: impl PgExecutor<'e>,
-) -> Result<Vec<Course>, MyError> {
+pub async fn get_all_courses<'e>(executor: impl PgExecutor<'e>) -> Result<Vec<Course>, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT * FROM "courses"
@@ -91,7 +90,7 @@ pub async fn update_course<'e>(
         });
     }
 
-    query_parts.push(format!("\"updated_at\" = NOW()"));
+    query_parts.push("\"updated_at\" = NOW()".to_string());
 
     let query_str = format!(
         r#"UPDATE "courses" SET {} WHERE "id" = ${} RETURNING *"#,
@@ -109,18 +108,16 @@ pub async fn update_course<'e>(
     }
     query = query.bind(id);
 
-    let course: Course = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Course",
-    })?;
+    let course: Course = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Course" })?;
 
     Ok(course)
 }
 
 /// Delete a course by ID
-pub async fn delete_course<'e>(
-    executor: impl PgExecutor<'e>,
-    id: i32,
-) -> Result<Course, MyError> {
+pub async fn delete_course<'e>(executor: impl PgExecutor<'e>, id: i32) -> Result<Course, MyError> {
     let query = sqlx::query_as(
         r#"
         DELETE FROM "courses"
@@ -130,9 +127,10 @@ pub async fn delete_course<'e>(
     )
     .bind(id);
 
-    let course: Course = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Course",
-    })?;
+    let course: Course = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Course" })?;
 
     Ok(course)
 }

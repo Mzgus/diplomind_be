@@ -1,4 +1,3 @@
-
 // #[derive(thiserror::Error, Debug)]
 // pub enum MyError {
 //     #[error("generation failed")]
@@ -9,9 +8,8 @@
 //     EnvVarNotSet(String)
 // }
 
-
-pub use thiserror::Error;
 use poem::error::ParseCookieError;
+pub use thiserror::Error;
 
 #[derive(Debug, thiserror::Error)]
 pub enum MyError {
@@ -57,7 +55,7 @@ impl poem::error::ResponseError for MyError {
             Self::InvalidInput { input_type: _ } => StatusCode::BAD_REQUEST,
             Self::DBErrors { entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Self::GenerationFailed { entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
-            Self::EnvVarNotSet{ entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
+            Self::EnvVarNotSet { entity: _ } => StatusCode::INTERNAL_SERVER_ERROR,
             Self::CookieError(_) => StatusCode::BAD_REQUEST,
             Self::TokenExpired => StatusCode::UNAUTHORIZED,
             Self::InvalidCredentials => StatusCode::UNAUTHORIZED,

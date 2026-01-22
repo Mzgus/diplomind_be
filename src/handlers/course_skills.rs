@@ -48,6 +48,7 @@ pub async fn unlink_skill_from_course(
     if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
         return Err(MyError::Unauthorized);
     }
-    let course_skill = db::course_skills::unlink_skill_from_course(pool, course_id, skill_id).await?;
+    let course_skill =
+        db::course_skills::unlink_skill_from_course(pool, course_id, skill_id).await?;
     Ok(Json(course_skill))
 }

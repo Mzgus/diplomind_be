@@ -1,12 +1,12 @@
-use crate::{errors::MyError, models::{User, PaginationParams, PaginatedResponse}};
+use crate::{
+    errors::MyError,
+    models::{PaginatedResponse, PaginationParams, User},
+};
 use sqlx::PgExecutor;
 use sqlx::Row;
 
 /// Get a complete user by ID (joins users_sheets and users_auth)
-pub async fn get_user_by_id<'e>(
-    executor: impl PgExecutor<'e>,
-    id: i32,
-) -> Result<User, MyError> {
+pub async fn get_user_by_id<'e>(executor: impl PgExecutor<'e>, id: i32) -> Result<User, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT 
@@ -25,9 +25,12 @@ pub async fn get_user_by_id<'e>(
     )
     .bind(id);
 
-    let user: User = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "User not found",
-    })?;
+    let user: User = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::DBErrors {
+            entity: "User not found",
+        })?;
 
     Ok(user)
 }
@@ -55,17 +58,18 @@ pub async fn get_user_by_email<'e>(
     )
     .bind(email);
 
-    let user: User = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "User not found",
-    })?;
+    let user: User = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::DBErrors {
+            entity: "User not found",
+        })?;
 
     Ok(user)
 }
 
 /// Get all complete users (joins users_sheets and users_auth)
-pub async fn get_all_users<'e>(
-    executor: impl PgExecutor<'e>,
-) -> Result<Vec<User>, MyError> {
+pub async fn get_all_users<'e>(executor: impl PgExecutor<'e>) -> Result<Vec<User>, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT 
@@ -106,11 +110,15 @@ pub async fn get_all_users_paginated<'e>(
         JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
         "#,
     );
-    
-    let total: i64 = count_query.fetch_one(executor).await
+
+    let total: i64 = count_query
+        .fetch_one(executor)
+        .await
         .map_err(|err| {
             eprintln!("Error fetching count: {:?}", err);
-            MyError::DBErrors { entity: "Failed to count users" }
+            MyError::DBErrors {
+                entity: "Failed to count users",
+            }
         })?
         .get(0);
 
@@ -141,7 +149,7 @@ pub async fn get_all_users_paginated<'e>(
             entity: "Failed to fetch users",
         }
     })?;
-    
+
     let total_pages = (total as f64 / params.per_page as f64).ceil() as u32;
 
     Ok(PaginatedResponse {

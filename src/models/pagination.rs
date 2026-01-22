@@ -8,8 +8,12 @@ pub struct PaginationParams {
     pub per_page: u32,
 }
 
-fn default_page() -> u32 { 1 }
-fn default_per_page() -> u32 { 20 }
+fn default_page() -> u32 {
+    1
+}
+fn default_per_page() -> u32 {
+    20
+}
 
 impl PaginationParams {
     pub fn validate(&mut self) {
@@ -23,11 +27,11 @@ impl PaginationParams {
             self.per_page = 20;
         }
     }
-    
+
     pub fn offset(&self) -> i64 {
         ((self.page - 1) * self.per_page) as i64
     }
-    
+
     pub fn limit(&self) -> i64 {
         self.per_page as i64
     }

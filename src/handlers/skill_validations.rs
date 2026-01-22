@@ -31,7 +31,8 @@ pub async fn get_user_validations(
         return Err(MyError::Unauthorized);
     }
 
-    let validations = db::skill_validations::get_user_validations(pool, user_id, Some(filter)).await?;
+    let validations =
+        db::skill_validations::get_user_validations(pool, user_id, Some(filter)).await?;
     Ok(Json(validations))
 }
 
@@ -63,9 +64,14 @@ pub async fn update_validation_status(
         return Err(MyError::Unauthorized);
     }
 
-    let validation =
-        db::skill_validations::update_validation_status(pool, user_id, skill_id, data, auth_user.0.user_id)
-            .await?;
+    let validation = db::skill_validations::update_validation_status(
+        pool,
+        user_id,
+        skill_id,
+        data,
+        auth_user.0.user_id,
+    )
+    .await?;
     Ok(Json(validation))
 }
 
@@ -119,6 +125,7 @@ pub async fn get_student_course_validations(
     }
     // For teachers/admins, access is allowed.
 
-    let validations = db::skill_validations::get_student_course_validations(pool, user_id, course_id).await?;
+    let validations =
+        db::skill_validations::get_student_course_validations(pool, user_id, course_id).await?;
     Ok(Json(validations))
 }

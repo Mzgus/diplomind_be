@@ -1,4 +1,9 @@
-use crate::{db, errors::MyError, middleware::{self, jwt_auth::AuthUser}, models::courses::*};
+use crate::{
+    db,
+    errors::MyError,
+    middleware::{self, jwt_auth::AuthUser},
+    models::courses::*,
+};
 use poem::web::{Data, Json, Path};
 use sqlx::{Pool, Postgres};
 
@@ -12,7 +17,7 @@ pub async fn create_course(
     if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
         return Err(MyError::Unauthorized);
     }
-    
+
     let course = db::courses::create_course(pool, data).await?;
     Ok(Json(course))
 }
@@ -49,7 +54,7 @@ pub async fn update_course(
     if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
         return Err(MyError::Unauthorized);
     }
-    
+
     let course = db::courses::update_course(pool, id, data).await?;
     Ok(Json(course))
 }
@@ -62,7 +67,7 @@ pub async fn delete_course(
     auth_user: AuthUser,
 ) -> Result<Json<Course>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let course = db::courses::delete_course(pool, id).await?;
     Ok(Json(course))
 }

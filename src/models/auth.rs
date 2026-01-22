@@ -1,6 +1,5 @@
 use sqlx::types::chrono;
 
-
 #[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize)]
 pub struct UserAuth {
     pub email: String,
@@ -38,4 +37,3 @@ pub struct RefreshToken {
     pub id_user_auth: i32,
     pub expiration_date: chrono::DateTime<chrono::Utc>,
 }
-
