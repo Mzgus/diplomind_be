@@ -1,5 +1,7 @@
 use crate::errors::MyError;
-use crate::models::skill_validations::{CreateValidationRequest, SkillValidation, StatusFilter, UpdateValidationStatus};
+use crate::models::skill_validations::{
+    CreateValidationRequest, SkillValidation, StatusFilter, UpdateValidationStatus,
+};
 use sqlx::{PgExecutor, Postgres};
 
 /// Create a new skill validation (teacher/admin only)
@@ -26,7 +28,9 @@ pub async fn create_validation<'e>(
                 entity: "Skill validation",
             })
         }
-        Err(e) => Err(MyError::DBErrors { entity: "skill_validations" }),
+        Err(_) => Err(MyError::DBErrors {
+            entity: "skill_validations",
+        }),
     }
 }
 
@@ -62,7 +66,9 @@ pub async fn get_user_validations<'e>(
     query
         .fetch_all(executor)
         .await
-        .map_err(|_| MyError::DBErrors { entity: "skill_validations" })
+        .map_err(|_| MyError::DBErrors {
+            entity: "skill_validations",
+        })
 }
 
 /// Get all pending validations (teacher/admin only)
@@ -78,7 +84,9 @@ pub async fn get_pending_validations<'e>(
     )
     .fetch_all(executor)
     .await
-    .map_err(|_| MyError::DBErrors { entity: "skill_validations" })
+    .map_err(|_| MyError::DBErrors {
+        entity: "skill_validations",
+    })
 }
 
 /// Update validation status (validate or reject)
@@ -112,7 +120,9 @@ pub async fn update_validation_status<'e>(
         sqlx::Error::RowNotFound => MyError::NotFound {
             entity: "Skill validation",
         },
-        _ => MyError::DBErrors { entity: "skill_validations" },
+        _ => MyError::DBErrors {
+            entity: "skill_validations",
+        },
     })
 }
 
@@ -136,7 +146,9 @@ pub async fn get_validation<'e>(
         sqlx::Error::RowNotFound => MyError::NotFound {
             entity: "Skill validation",
         },
-        _ => MyError::DBErrors { entity: "skill_validations" },
+        _ => MyError::DBErrors {
+            entity: "skill_validations",
+        },
     })
 }
 
@@ -161,7 +173,9 @@ pub async fn delete_validation<'e>(
         sqlx::Error::RowNotFound => MyError::NotFound {
             entity: "Skill validation",
         },
-        _ => MyError::DBErrors { entity: "skill_validations" },
+        _ => MyError::DBErrors {
+            entity: "skill_validations",
+        },
     })
 }
 
@@ -184,5 +198,7 @@ pub async fn get_student_course_validations<'e>(
     .bind(course_id)
     .fetch_all(executor)
     .await
-    .map_err(|_| MyError::DBErrors { entity: "skill_validations" })
+    .map_err(|_| MyError::DBErrors {
+        entity: "skill_validations",
+    })
 }

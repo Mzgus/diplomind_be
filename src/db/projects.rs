@@ -40,17 +40,16 @@ pub async fn get_project_by_id<'e>(
     )
     .bind(id);
 
-    let project: Project = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Project",
-    })?;
+    let project: Project = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Project" })?;
 
     Ok(project)
 }
 
 /// Get all projects
-pub async fn get_all_projects<'e>(
-    executor: impl PgExecutor<'e>,
-) -> Result<Vec<Project>, MyError> {
+pub async fn get_all_projects<'e>(executor: impl PgExecutor<'e>) -> Result<Vec<Project>, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT * FROM "projects"
@@ -141,9 +140,10 @@ pub async fn update_project<'e>(
     }
     query = query.bind(id);
 
-    let project: Project = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Project",
-    })?;
+    let project: Project = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Project" })?;
 
     Ok(project)
 }
@@ -162,9 +162,10 @@ pub async fn delete_project<'e>(
     )
     .bind(id);
 
-    let project: Project = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Project",
-    })?;
+    let project: Project = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Project" })?;
 
     Ok(project)
 }

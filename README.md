@@ -14,7 +14,7 @@ Diplomind is an educational platform designed to manage student skill acquisitio
 
 - **Language**: Rust
 - **Framework**: Poem
-- **Database**: PostgreSQL
+- **Database**: PostgreSQL hosted in a Docker VM
 - **SQL query handler**: SQLx
 - **Authentication**:
   - Access token : Some user informations stored in a JsonWebToken of short validity in the localstorage.
@@ -26,7 +26,7 @@ Diplomind is an educational platform designed to manage student skill acquisitio
 ### Prerequisites
 
 - Rust 1.70+
-- PostgreSQL 14+
+- Docker
 - Just (command runner) #Non mandatory but helps for quick and easy commands. Even without <b><i>Just</i></b> you can just copy/paste the commands from the file.
 
 ### Installation
