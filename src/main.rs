@@ -56,10 +56,7 @@ pub async fn main() -> Result<(), std::io::Error> {
                 .at("/login", post(handlers::auth::login))
                 .at("/refresh_tokens", get(handlers::auth::refresh_tokens))
                 // Protected routes (authentication required) - add middleware per route
-                .at(
-                    "/logout",
-                    get(handlers::auth::logout).with(JwtAuth::new(token_manager.clone())),
-                )
+                .at("/logout", get(handlers::auth::logout))
                 .at(
                     "/verify_token",
                     get(handlers::auth::verify_token).with(JwtAuth::new(token_manager.clone())),
