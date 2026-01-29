@@ -1,4 +1,9 @@
-use crate::{db, errors::MyError, middleware::{self, jwt_auth::AuthUser}, models::classes::*};
+use crate::{
+    db,
+    errors::MyError,
+    middleware::{self, jwt_auth::AuthUser},
+    models::classes::*,
+};
 use poem::web::{Data, Json, Path};
 use sqlx::{Pool, Postgres};
 
@@ -10,7 +15,7 @@ pub async fn create_class(
     auth_user: AuthUser,
 ) -> Result<Json<Class>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let class = db::classes::create_class(pool, data).await?;
     Ok(Json(class))
 }
@@ -45,7 +50,7 @@ pub async fn update_class(
     auth_user: AuthUser,
 ) -> Result<Json<Class>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let class = db::classes::update_class(pool, id, data).await?;
     Ok(Json(class))
 }
@@ -58,7 +63,31 @@ pub async fn delete_class(
     auth_user: AuthUser,
 ) -> Result<Json<Class>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let class = db::classes::delete_class(pool, id).await?;
     Ok(Json(class))
+}
+
+/// Get all classes for a teacher
+#[poem::handler]
+pub async fn get_teacher_classes(
+    Data(pool): Data<&Pool<Postgres>>,
+    Path(id): Path<i32>,
+    auth_user: AuthUser,
+) -> Result<Json<Vec<Class>>, MyError> {
+    // RBAC:
+    // - Teachers can view their own classes
+    // - Admin can view any teacher's classes
+    let role = &auth_user.0.user_role;
+    let auth_id = auth_user.0.user_id;
+
+    if role == "teacher" && auth_id != id {
+        return Err(MyError::Unauthorized);
+    }
+    if role == "student" {
+        return Err(MyError::Unauthorized);
+    }
+
+    let classes = db::classes::get_teacher_classes(pool, id).await?;
+    Ok(Json(classes))
 }

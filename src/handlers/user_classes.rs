@@ -1,4 +1,9 @@
-use crate::{db, errors::MyError, middleware::{self, jwt_auth::AuthUser}, models::user_classes::*};
+use crate::{
+    db,
+    errors::MyError,
+    middleware::{self, jwt_auth::AuthUser},
+    models::user_classes::*,
+};
 use poem::web::{Data, Json, Path};
 use sqlx::{Pool, Postgres};
 

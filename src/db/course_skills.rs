@@ -18,7 +18,7 @@ pub async fn link_skill_to_course<'e>(
 
     let course_skill: CourseSkill = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error linking skill to course: {:?}", err);
-        
+
         if let sqlx::Error::Database(db_err) = &err {
             if db_err.is_unique_violation() {
                 return MyError::AlreadyExists {
@@ -26,7 +26,7 @@ pub async fn link_skill_to_course<'e>(
                 };
             }
         }
-        
+
         MyError::DBErrors {
             entity: "Failed to link skill to course",
         }
@@ -97,9 +97,13 @@ pub async fn unlink_skill_from_course<'e>(
     .bind(course_id)
     .bind(skill_id);
 
-    let course_skill: CourseSkill = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Course-Skill association",
-    })?;
+    let course_skill: CourseSkill =
+        query
+            .fetch_one(executor)
+            .await
+            .map_err(|_| MyError::NotFound {
+                entity: "Course-Skill association",
+            })?;
 
     Ok(course_skill)
 }

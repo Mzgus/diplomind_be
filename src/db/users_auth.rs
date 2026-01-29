@@ -8,14 +8,14 @@ pub async fn create_user_auth<'e>(
 ) -> Result<UserAuthRecord, MyError> {
     let query = sqlx::query_as(
         r#"
-        INSERT INTO "users_auth" ("email", "pwd", "id_user_sheet")
+        INSERT INTO "users_auth" ("email", "pwd", "account_id")
         VALUES ($1, $2, $3)
         RETURNING *
         "#,
     )
     .bind(&data.email)
     .bind(&data.pwd)
-    .bind(data.id_user_sheet);
+    .bind(data.account_id);
 
     let user_auth: UserAuthRecord = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error creating user auth: {:?}", err);
@@ -40,9 +40,13 @@ pub async fn get_user_auth_by_id<'e>(
     )
     .bind(id);
 
-    let user_auth: UserAuthRecord = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "User auth not found",
-    })?;
+    let user_auth: UserAuthRecord =
+        query
+            .fetch_one(executor)
+            .await
+            .map_err(|_| MyError::DBErrors {
+                entity: "User auth not found",
+            })?;
 
     Ok(user_auth)
 }
@@ -60,9 +64,13 @@ pub async fn get_user_auth_by_email<'e>(
     )
     .bind(email);
 
-    let user_auth: UserAuthRecord = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "User auth not found",
-    })?;
+    let user_auth: UserAuthRecord =
+        query
+            .fetch_one(executor)
+            .await
+            .map_err(|_| MyError::DBErrors {
+                entity: "User auth not found",
+            })?;
 
     Ok(user_auth)
 }
@@ -135,9 +143,13 @@ pub async fn delete_user_auth<'e>(
     )
     .bind(id);
 
-    let user_auth: UserAuthRecord = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "Failed to delete user auth",
-    })?;
+    let user_auth: UserAuthRecord =
+        query
+            .fetch_one(executor)
+            .await
+            .map_err(|_| MyError::DBErrors {
+                entity: "Failed to delete user auth",
+            })?;
 
     Ok(user_auth)
 }

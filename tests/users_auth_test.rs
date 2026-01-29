@@ -10,9 +10,9 @@ use common::*;
 async fn test_create_user_auth_as_admin() {
     let pool = get_test_pool().await;
     let token = login_and_get_token("sophie.martin@diplomind.fr", "Password123").await;
-    
+
     let client = reqwest::Client::new();
-    
+
     // Create a user sheet first
     let sheet_response = client
         .post("http://localhost:3000/users_sheets")
@@ -26,10 +26,17 @@ async fn test_create_user_auth_as_admin() {
         .send()
         .await
         .unwrap();
-    
+
     let sheet: serde_json::Value = sheet_response.json().await.unwrap();
     let sheet_id = sheet["id"].as_i64().unwrap();
-    
+
+    // Create Account manually (no API for it yet)
+    let account_id: i32 = sqlx::query_scalar("INSERT INTO accounts (email) VALUES ($1) RETURNING id")
+        .bind("authtest@test.com")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
     // Create user auth
     let auth_response = client
         .post("http://localhost:3000/users_auth")
@@ -37,28 +44,26 @@ async fn test_create_user_auth_as_admin() {
         .json(&serde_json::json!({
             "email": "authtest@test.com",
             "pwd": "TestPassword123",
-            "id_user_sheet": sheet_id
+            "account_id": account_id
         }))
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(auth_response.status(), 200);
     let auth: serde_json::Value = auth_response.json().await.unwrap();
     assert_eq!(auth["email"], "authtest@test.com");
-    
+
     // Verify password is hashed
     let auth_id = auth["id"].as_i64().unwrap();
-    let hashed_pwd: String = sqlx::query_scalar(
-        "SELECT pwd FROM users_auth WHERE id = $1"
-    )
-    .bind(auth_id as i32)
-    .fetch_one(&pool)
-    .await
-    .unwrap();
-    
+    let hashed_pwd: String = sqlx::query_scalar("SELECT pwd FROM users_auth WHERE id = $1")
+        .bind(auth_id as i32)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
     assert!(hashed_pwd.starts_with("$argon2"));
-    
+
     // Cleanup
     client
         .delete(&format!("http://localhost:3000/users_auth/{}", auth_id))
@@ -66,11 +71,18 @@ async fn test_create_user_auth_as_admin() {
         .send()
         .await
         .unwrap();
-    
+
     client
         .delete(&format!("http://localhost:3000/users_sheets/{}", sheet_id))
         .header("Authorization", format!("Bearer {}", token))
         .send()
+        .await
+        .unwrap();
+
+    // Clean up Account
+    sqlx::query("DELETE FROM accounts WHERE id = $1")
+        .bind(account_id)
+        .execute(&pool)
         .await
         .unwrap();
 }
@@ -78,7 +90,7 @@ async fn test_create_user_auth_as_admin() {
 #[tokio::test]
 async fn test_create_user_auth_with_duplicate_email() {
     let token = login_and_get_token("sophie.martin@diplomind.fr", "Password123").await;
-    
+
     let client = reqwest::Client::new();
     let response = client
         .post("http://localhost:3000/users_auth")
@@ -86,12 +98,12 @@ async fn test_create_user_auth_with_duplicate_email() {
         .json(&serde_json::json!({
             "email": "sophie.martin@diplomind.fr",
             "pwd": "TestPassword123",
-            "id_user_sheet": 1
+            "account_id": 1
         }))
         .send()
         .await
         .unwrap();
-    
+
     // Should fail due to unique constraint on email
     assert_eq!(response.status(), 500);
 }
@@ -100,15 +112,14 @@ async fn test_create_user_auth_with_duplicate_email() {
 async fn test_get_user_auth_by_id() {
     let pool = get_test_pool().await;
     let token = login_and_get_token("sophie.martin@diplomind.fr", "Password123").await;
-    
+
     // Get Sophie's auth ID
-    let auth_id: i32 = sqlx::query_scalar(
-        "SELECT id FROM users_auth WHERE email = 'sophie.martin@diplomind.fr'"
-    )
-    .fetch_one(&pool)
-    .await
-    .unwrap();
-    
+    let auth_id: i32 =
+        sqlx::query_scalar("SELECT id FROM users_auth WHERE email = 'sophie.martin@diplomind.fr'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("http://localhost:3000/users_auth/{}", auth_id))
@@ -116,7 +127,7 @@ async fn test_get_user_auth_by_id() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["email"], "sophie.martin@diplomind.fr");
@@ -126,9 +137,9 @@ async fn test_get_user_auth_by_id() {
 async fn test_update_user_auth_email() {
     let pool = get_test_pool().await;
     let token = login_and_get_token("sophie.martin@diplomind.fr", "Password123").await;
-    
+
     let client = reqwest::Client::new();
-    
+
     // Create temp user for testing
     let sheet_response = client
         .post("http://localhost:3000/users_sheets")
@@ -142,28 +153,38 @@ async fn test_update_user_auth_email() {
         .send()
         .await
         .unwrap();
-    
+
     let sheet: serde_json::Value = sheet_response.json().await.unwrap();
     let sheet_id = sheet["id"].as_i64().unwrap();
-    
+
+    // Create Account manually
+    let account_id: i32 = sqlx::query_scalar("INSERT INTO accounts (email) VALUES ($1) RETURNING id")
+        .bind("original@test.com")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
     let auth_response = client
         .post("http://localhost:3000/users_auth")
         .header("Authorization", format!("Bearer {}", token))
         .json(&serde_json::json!({
             "email": "original@test.com",
             "pwd": "TestPassword123",
-            "id_user_sheet": sheet_id
+            "account_id": account_id
         }))
         .send()
         .await
         .unwrap();
-    
+
     let auth: serde_json::Value = auth_response.json().await.unwrap();
     let auth_id = auth["id"].as_i64().unwrap();
-    
+
     // Update email
     let update_response = client
-        .patch(&format!("http://localhost:3000/users_auth/{}/email", auth_id))
+        .patch(&format!(
+            "http://localhost:3000/users_auth/{}/email",
+            auth_id
+        ))
         .header("Authorization", format!("Bearer {}", token))
         .json(&serde_json::json!({
             "email": "updated@test.com"
@@ -171,20 +192,18 @@ async fn test_update_user_auth_email() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(update_response.status(), 200);
-    
+
     // Verify email was updated
-    let updated_email: String = sqlx::query_scalar(
-        "SELECT email FROM users_auth WHERE id = $1"
-    )
-    .bind(auth_id as i32)
-    .fetch_one(&pool)
-    .await
-    .unwrap();
-    
+    let updated_email: String = sqlx::query_scalar("SELECT email FROM users_auth WHERE id = $1")
+        .bind(auth_id as i32)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
     assert_eq!(updated_email, "updated@test.com");
-    
+
     // Cleanup
     client
         .delete(&format!("http://localhost:3000/users_auth/{}", auth_id))
@@ -192,11 +211,22 @@ async fn test_update_user_auth_email() {
         .send()
         .await
         .unwrap();
-    
+
     client
         .delete(&format!("http://localhost:3000/users_sheets/{}", sheet_id))
         .header("Authorization", format!("Bearer {}", token))
         .send()
+        .await
+        .unwrap();
+
+    // Clean up Account
+    sqlx::query("DELETE FROM accounts WHERE id = $1")
+        .bind(account_id) // This was not captured in the original test scope but needs to be to delete it
+        // Ideally we capture account_id in the test scope above.
+        // Wait, account_id IS captured in the scope above.
+        // Actually, I need to fetch it or ensure it's available.
+        // In this test, account_id is a new variable I introduced.
+        .execute(&pool)
         .await
         .unwrap();
 }
@@ -204,22 +234,24 @@ async fn test_update_user_auth_email() {
 #[tokio::test]
 async fn test_password_is_hashed_on_update() {
     let pool = get_test_pool().await;
-    
+
     // Login as admin
     let token = login_and_get_token("sophie.martin@diplomind.fr", "Password123").await;
-    
+
     // Get auth ID for Sophie
-    let auth_id: i32 = sqlx::query_scalar(
-        "SELECT id FROM users_auth WHERE email = 'sophie.martin@diplomind.fr'"
-    )
-    .fetch_one(&pool)
-    .await
-    .unwrap();
-    
+    let auth_id: i32 =
+        sqlx::query_scalar("SELECT id FROM users_auth WHERE email = 'sophie.martin@diplomind.fr'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+
     // Update password
     let client = reqwest::Client::new();
     let response = client
-        .patch(&format!("http://localhost:3000/users_auth/{}/password", auth_id))
+        .patch(&format!(
+            "http://localhost:3000/users_auth/{}/password",
+            auth_id
+        ))
         .header("Authorization", format!("Bearer {}", token))
         .json(&serde_json::json!({
             "pwd": "NewPassword456"
@@ -227,21 +259,19 @@ async fn test_password_is_hashed_on_update() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
-    
+
     // Verify password is hashed in DB
-    let hashed_pwd: String = sqlx::query_scalar(
-        "SELECT pwd FROM users_auth WHERE id = $1"
-    )
-    .bind(auth_id)
-    .fetch_one(&pool)
-    .await
-    .unwrap();
-    
+    let hashed_pwd: String = sqlx::query_scalar("SELECT pwd FROM users_auth WHERE id = $1")
+        .bind(auth_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
     assert!(hashed_pwd.starts_with("$argon2"));
     assert_ne!(hashed_pwd, "NewPassword456");
-    
+
     // Verify can login with new password
     let login_response = client
         .post("http://localhost:3000/login")
@@ -252,9 +282,9 @@ async fn test_password_is_hashed_on_update() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(login_response.status(), 200);
-    
+
     // Restore original password
     sqlx::query("UPDATE users_auth SET pwd = $1 WHERE id = $2")
         .bind("$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI")
@@ -267,16 +297,16 @@ async fn test_password_is_hashed_on_update() {
 #[tokio::test]
 async fn test_student_cannot_delete_user_auth() {
     let pool = get_test_pool().await;
-    let student_token = login_and_get_token("emma.moreau@student.diplomind.fr", "Password123").await;
-    
+    let student_token =
+        login_and_get_token("emma.moreau@student.diplomind.fr", "Password123").await;
+
     // Get Sophie's auth ID
-    let auth_id: i32 = sqlx::query_scalar(
-        "SELECT id FROM users_auth WHERE email = 'sophie.martin@diplomind.fr'"
-    )
-    .fetch_one(&pool)
-    .await
-    .unwrap();
-    
+    let auth_id: i32 =
+        sqlx::query_scalar("SELECT id FROM users_auth WHERE email = 'sophie.martin@diplomind.fr'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+
     let client = reqwest::Client::new();
     let response = client
         .delete(&format!("http://localhost:3000/users_auth/{}", auth_id))
@@ -284,16 +314,16 @@ async fn test_student_cannot_delete_user_auth() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 401);
 }
 
 #[tokio::test]
 async fn test_delete_user_auth_as_admin() {
     let token = login_and_get_token("sophie.martin@diplomind.fr", "Password123").await;
-    
+
     let client = reqwest::Client::new();
-    
+
     // Create temp user
     let sheet_response = client
         .post("http://localhost:3000/users_sheets")
@@ -307,25 +337,32 @@ async fn test_delete_user_auth_as_admin() {
         .send()
         .await
         .unwrap();
-    
+
     let sheet: serde_json::Value = sheet_response.json().await.unwrap();
     let sheet_id = sheet["id"].as_i64().unwrap();
-    
+
+    // Create Account manually
+    let account_id: i32 = sqlx::query_scalar("INSERT INTO accounts (email) VALUES ($1) RETURNING id")
+        .bind("todelete@test.com")
+        .fetch_one(&common::get_test_pool().await) 
+        .await
+        .unwrap();
+
     let auth_response = client
         .post("http://localhost:3000/users_auth")
         .header("Authorization", format!("Bearer {}", token))
         .json(&serde_json::json!({
             "email": "todelete@test.com",
             "pwd": "TestPassword123",
-            "id_user_sheet": sheet_id
+            "account_id": account_id
         }))
         .send()
         .await
         .unwrap();
-    
+
     let auth: serde_json::Value = auth_response.json().await.unwrap();
     let auth_id = auth["id"].as_i64().unwrap();
-    
+
     // Delete auth
     let delete_response = client
         .delete(&format!("http://localhost:3000/users_auth/{}", auth_id))
@@ -333,14 +370,22 @@ async fn test_delete_user_auth_as_admin() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(delete_response.status(), 200);
-    
+
     // Cleanup sheet
     client
         .delete(&format!("http://localhost:3000/users_sheets/{}", sheet_id))
         .header("Authorization", format!("Bearer {}", token))
         .send()
+        .await
+        .unwrap();
+
+    // Clean up Account
+    let pool = get_test_pool().await;
+    sqlx::query("DELETE FROM accounts WHERE id = $1")
+        .bind(account_id) // account_id needs to be available
+        .execute(&pool)
         .await
         .unwrap();
 }

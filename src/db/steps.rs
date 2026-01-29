@@ -7,7 +7,7 @@ pub async fn create_step<'e>(
     data: CreateStep,
 ) -> Result<Step, MyError> {
     let step_order = data.step_order.unwrap_or(0);
-    
+
     let query = sqlx::query_as(
         r#"
         INSERT INTO "steps" ("name", "description", "project_id", "step_order")
@@ -31,10 +31,7 @@ pub async fn create_step<'e>(
 }
 
 /// Get a step by ID
-pub async fn get_step_by_id<'e>(
-    executor: impl PgExecutor<'e>,
-    id: i32,
-) -> Result<Step, MyError> {
+pub async fn get_step_by_id<'e>(executor: impl PgExecutor<'e>, id: i32) -> Result<Step, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT * FROM "steps"
@@ -43,17 +40,16 @@ pub async fn get_step_by_id<'e>(
     )
     .bind(id);
 
-    let step: Step = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Step",
-    })?;
+    let step: Step = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Step" })?;
 
     Ok(step)
 }
 
 /// Get all steps
-pub async fn get_all_steps<'e>(
-    executor: impl PgExecutor<'e>,
-) -> Result<Vec<Step>, MyError> {
+pub async fn get_all_steps<'e>(executor: impl PgExecutor<'e>) -> Result<Vec<Step>, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT * FROM "steps"
@@ -127,7 +123,7 @@ pub async fn update_step<'e>(
         });
     }
 
-    query_parts.push(format!("\"updated_at\" = NOW()"));
+    query_parts.push("\"updated_at\" = NOW()".to_string());
 
     let query_str = format!(
         r#"UPDATE "steps" SET {} WHERE "id" = ${} RETURNING *"#,
@@ -151,18 +147,16 @@ pub async fn update_step<'e>(
     }
     query = query.bind(id);
 
-    let step: Step = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Step",
-    })?;
+    let step: Step = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Step" })?;
 
     Ok(step)
 }
 
 /// Delete a step by ID
-pub async fn delete_step<'e>(
-    executor: impl PgExecutor<'e>,
-    id: i32,
-) -> Result<Step, MyError> {
+pub async fn delete_step<'e>(executor: impl PgExecutor<'e>, id: i32) -> Result<Step, MyError> {
     let query = sqlx::query_as(
         r#"
         DELETE FROM "steps"
@@ -172,9 +166,10 @@ pub async fn delete_step<'e>(
     )
     .bind(id);
 
-    let step: Step = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Step",
-    })?;
+    let step: Step = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Step" })?;
 
     Ok(step)
 }

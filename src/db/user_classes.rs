@@ -18,7 +18,7 @@ pub async fn assign_user_to_class<'e>(
 
     let user_class: UserClass = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error assigning user to class: {:?}", err);
-        
+
         if let sqlx::Error::Database(db_err) = &err {
             if db_err.is_unique_violation() {
                 return MyError::AlreadyExists {
@@ -26,7 +26,7 @@ pub async fn assign_user_to_class<'e>(
                 };
             }
         }
-        
+
         MyError::DBErrors {
             entity: "Failed to assign user to class",
         }
@@ -97,9 +97,12 @@ pub async fn remove_user_from_class<'e>(
     .bind(user_id)
     .bind(class_id);
 
-    let user_class: UserClass = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "User-Class association",
-    })?;
+    let user_class: UserClass = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound {
+            entity: "User-Class association",
+        })?;
 
     Ok(user_class)
 }

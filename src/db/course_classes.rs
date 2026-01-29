@@ -18,7 +18,7 @@ pub async fn link_course_to_class<'e>(
 
     let course_class: CourseClass = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error linking course to class: {:?}", err);
-        
+
         // Check if it's a unique constraint violation
         if let sqlx::Error::Database(db_err) = &err {
             if db_err.is_unique_violation() {
@@ -27,7 +27,7 @@ pub async fn link_course_to_class<'e>(
                 };
             }
         }
-        
+
         MyError::DBErrors {
             entity: "Failed to link course to class",
         }
@@ -98,9 +98,13 @@ pub async fn unlink_course_from_class<'e>(
     .bind(course_id)
     .bind(class_id);
 
-    let course_class: CourseClass = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Course-Class association",
-    })?;
+    let course_class: CourseClass =
+        query
+            .fetch_one(executor)
+            .await
+            .map_err(|_| MyError::NotFound {
+                entity: "Course-Class association",
+            })?;
 
     Ok(course_class)
 }

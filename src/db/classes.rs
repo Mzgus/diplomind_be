@@ -26,10 +26,7 @@ pub async fn create_class<'e>(
 }
 
 /// Get a class by ID
-pub async fn get_class_by_id<'e>(
-    executor: impl PgExecutor<'e>,
-    id: i32,
-) -> Result<Class, MyError> {
+pub async fn get_class_by_id<'e>(executor: impl PgExecutor<'e>, id: i32) -> Result<Class, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT * FROM "classes"
@@ -38,17 +35,16 @@ pub async fn get_class_by_id<'e>(
     )
     .bind(id);
 
-    let class: Class = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Class",
-    })?;
+    let class: Class = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Class" })?;
 
     Ok(class)
 }
 
 /// Get all classes
-pub async fn get_all_classes<'e>(
-    executor: impl PgExecutor<'e>,
-) -> Result<Vec<Class>, MyError> {
+pub async fn get_all_classes<'e>(executor: impl PgExecutor<'e>) -> Result<Vec<Class>, MyError> {
     let query = sqlx::query_as(
         r#"
         SELECT * FROM "classes"
@@ -88,7 +84,7 @@ pub async fn update_class<'e>(
     }
 
     // Always update updated_at
-    query_parts.push(format!("\"updated_at\" = NOW()"));
+    query_parts.push("\"updated_at\" = NOW()".to_string());
 
     let query_str = format!(
         r#"UPDATE "classes" SET {} WHERE "id" = ${} RETURNING *"#,
@@ -103,18 +99,16 @@ pub async fn update_class<'e>(
     }
     query = query.bind(id);
 
-    let class: Class = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Class",
-    })?;
+    let class: Class = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Class" })?;
 
     Ok(class)
 }
 
 /// Delete a class by ID
-pub async fn delete_class<'e>(
-    executor: impl PgExecutor<'e>,
-    id: i32,
-) -> Result<Class, MyError> {
+pub async fn delete_class<'e>(executor: impl PgExecutor<'e>, id: i32) -> Result<Class, MyError> {
     let query = sqlx::query_as(
         r#"
         DELETE FROM "classes"
@@ -124,9 +118,37 @@ pub async fn delete_class<'e>(
     )
     .bind(id);
 
-    let class: Class = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "Class",
-    })?;
+    let class: Class = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound { entity: "Class" })?;
 
     Ok(class)
+}
+
+/// Get all classes for a teacher (where they teach a course linked to the class)
+pub async fn get_teacher_classes<'e>(
+    executor: impl PgExecutor<'e>,
+    teacher_id: i32,
+) -> Result<Vec<Class>, MyError> {
+    let query = sqlx::query_as(
+        r#"
+        SELECT DISTINCT c.*
+        FROM classes c
+        JOIN course_classes cc ON c.id = cc.class_id
+        JOIN user_courses uc ON cc.course_id = uc.course_id
+        WHERE uc.user_id = $1
+        ORDER BY c.name ASC
+        "#,
+    )
+    .bind(teacher_id);
+
+    let classes: Vec<Class> = query.fetch_all(executor).await.map_err(|err| {
+        eprintln!("Error fetching teacher classes: {:?}", err);
+        MyError::DBErrors {
+            entity: "Failed to fetch teacher classes",
+        }
+    })?;
+
+    Ok(classes)
 }

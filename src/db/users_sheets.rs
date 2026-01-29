@@ -41,9 +41,12 @@ pub async fn get_user_sheet_by_id<'e>(
     )
     .bind(id);
 
-    let user_sheet: UserSheet = query.fetch_one(executor).await.map_err(|_| MyError::NotFound {
-        entity: "User sheet",
-    })?;
+    let user_sheet: UserSheet = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::NotFound {
+            entity: "User sheet",
+        })?;
 
     Ok(user_sheet)
 }
@@ -124,9 +127,12 @@ pub async fn update_user_sheet<'e>(
     }
     query = query.bind(id);
 
-    let user_sheet: UserSheet = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "Failed to update user sheet",
-    })?;
+    let user_sheet: UserSheet = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::DBErrors {
+            entity: "Failed to update user sheet",
+        })?;
 
     Ok(user_sheet)
 }
@@ -145,9 +151,12 @@ pub async fn delete_user_sheet<'e>(
     )
     .bind(id);
 
-    let user_sheet: UserSheet = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "Failed to delete user sheet",
-    })?;
+    let user_sheet: UserSheet = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::DBErrors {
+            entity: "Failed to delete user sheet",
+        })?;
 
     Ok(user_sheet)
 }
@@ -169,10 +178,12 @@ pub async fn set_user_active_status<'e>(
     .bind(active)
     .bind(user_id);
 
-    let user_sheet: UserSheet = query.fetch_one(executor).await.map_err(|_| MyError::DBErrors {
-        entity: "Failed to update user active status",
-    })?;
+    let user_sheet: UserSheet = query
+        .fetch_one(executor)
+        .await
+        .map_err(|_| MyError::DBErrors {
+            entity: "Failed to update user active status",
+        })?;
 
     Ok(user_sheet)
 }
-

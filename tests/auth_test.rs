@@ -18,7 +18,7 @@ async fn test_login_success() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert!(body.get("token").is_some());
@@ -36,7 +36,7 @@ async fn test_login_invalid_credentials() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 401);
 }
 
@@ -45,14 +45,14 @@ async fn test_refresh_tokens_success() {
     // Note: This test verifies the endpoint exists and responds
     // Full cookie-based testing would require additional setup
     let client = reqwest::Client::new();
-    
+
     // Call refresh_tokens endpoint (will fail without cookie, but that's expected)
     let response = client
         .get("http://localhost:3000/refresh_tokens")
         .send()
         .await
         .unwrap();
-    
+
     // Should return 401 or 500 without a valid refresh token cookie
     // The important part is that the endpoint exists and responds
     assert!(response.status().is_client_error() || response.status().is_server_error());
@@ -61,7 +61,7 @@ async fn test_refresh_tokens_success() {
 #[tokio::test]
 async fn test_logout_success() {
     let token = login_and_get_token("sophie.martin@diplomind.fr", "Password123").await;
-    
+
     let client = reqwest::Client::new();
     let response = client
         .get("http://localhost:3000/logout")
@@ -69,14 +69,14 @@ async fn test_logout_success() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
 }
 
 #[tokio::test]
 async fn test_verify_token_success() {
     let token = login_and_get_token("sophie.martin@diplomind.fr", "Password123").await;
-    
+
     let client = reqwest::Client::new();
     let response = client
         .get("http://localhost:3000/verify_token")
@@ -84,7 +84,7 @@ async fn test_verify_token_success() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 200);
     let body: serde_json::Value = response.json().await.unwrap();
     assert_eq!(body["user_email"], "sophie.martin@diplomind.fr");
@@ -98,7 +98,7 @@ async fn test_access_protected_route_without_token() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 401);
 }
 
@@ -111,6 +111,6 @@ async fn test_access_protected_route_with_invalid_token() {
         .send()
         .await
         .unwrap();
-    
+
     assert_eq!(response.status(), 401);
 }

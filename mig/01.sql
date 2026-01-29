@@ -1,6 +1,7 @@
--- Migration 02: Complete Database Schema from MCD
+-- Migration 01: Complete Database Schema from MCD (Updated for Multi-Account)
 -- This migration creates all tables for the Diplomind project
 
+-- Drop tables in correct order (dependents first)
 DROP TABLE IF EXISTS skill_validations;
 DROP TABLE IF EXISTS step_skills;
 DROP TABLE IF EXISTS user_classes;
@@ -13,14 +14,22 @@ DROP TABLE IF EXISTS courses;
 DROP TABLE IF EXISTS skills;
 DROP TABLE IF EXISTS classes;
 DROP TABLE IF EXISTS refresh_tokens;
-DROP TABLE IF EXISTS users_auth;
+DROP TABLE IF EXISTS accounts_users_sheets;
+DROP TABLE IF EXISTS users_auth; -- Depends on accounts
+DROP TABLE IF EXISTS accounts;
 DROP TABLE IF EXISTS users_sheets;
 
 -- ============================================
 -- 2. Core Entity Tables
 -- ============================================
 
--- users sheets
+-- Accounts (New Root Identity)
+CREATE TABLE IF NOT EXISTS accounts (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL
+);
+
+-- Users Sheets (Profiles)
 CREATE TABLE IF NOT EXISTS users_sheets (
     id SERIAL PRIMARY KEY,
     last_name TEXT NOT NULL,
@@ -30,18 +39,25 @@ CREATE TABLE IF NOT EXISTS users_sheets (
     active BOOLEAN DEFAULT TRUE
 );
 
--- users auth
+-- Association Accounts <-> Users Sheets
+CREATE TABLE IF NOT EXISTS accounts_users_sheets (
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+    user_sheet_id INTEGER NOT NULL REFERENCES users_sheets(id) ON DELETE CASCADE,
+    PRIMARY KEY (account_id, user_sheet_id)
+);
+
+-- Users Auth (Credentials) - Linked to Account
 CREATE TABLE IF NOT EXISTS users_auth (
     id SERIAL PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     pwd TEXT NOT NULL,
-    id_user_sheet INTEGER REFERENCES users_sheets(id) ON DELETE CASCADE
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 );
 
--- refresh tokens
+-- Refresh Tokens - Linked to Account (Session)
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     token TEXT NOT NULL PRIMARY KEY,
-    id_user_auth INTEGER REFERENCES users_auth(id) ON DELETE CASCADE,
+    account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
     expiration_date TIMESTAMPTZ NOT NULL 
 );
 
@@ -103,6 +119,7 @@ CREATE TABLE IF NOT EXISTS skill_validations (
     user_id INTEGER NOT NULL REFERENCES users_sheets(id) ON DELETE CASCADE,
     skill_id INTEGER NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
     status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'validated', 'rejected')),
+    comment TEXT, -- Optional comment from teacher/admin
     validated_at TIMESTAMPTZ,
     validated_by INTEGER REFERENCES users_sheets(id), -- Teacher/Admin who validated
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -154,13 +171,20 @@ CREATE TABLE IF NOT EXISTS course_skills (
 -- 4. Indexes for Performance
 -- ============================================
 
+-- Accounts
+CREATE INDEX IF NOT EXISTS idx_accounts_email ON accounts(email);
+
 -- Users
 CREATE INDEX IF NOT EXISTS idx_users_sheets_active ON users_sheets(active);
 CREATE INDEX IF NOT EXISTS idx_users_auth_email ON users_auth(email);
 
+-- Accounts Users Sheets
+CREATE INDEX IF NOT EXISTS idx_accounts_users_sheets_account ON accounts_users_sheets(account_id);
+CREATE INDEX IF NOT EXISTS idx_accounts_users_sheets_sheet ON accounts_users_sheets(user_sheet_id);
+
 -- Refresh Tokens
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expiration ON refresh_tokens(expiration_date);
-CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_auth ON refresh_tokens(id_user_auth);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_account ON refresh_tokens(account_id);
 
 -- Skills
 CREATE INDEX IF NOT EXISTS idx_skills_name ON skills(name);

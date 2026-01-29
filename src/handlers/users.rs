@@ -1,7 +1,7 @@
+use crate::models::{PaginatedResponse, PaginationParams};
 use crate::{db, errors::MyError, middleware::jwt_auth::AuthUser, models::User};
-use poem::web::{Data, Path, Json, Query};
+use poem::web::{Data, Json, Path, Query};
 use sqlx::{Pool, Postgres};
-use crate::models::{PaginationParams, PaginatedResponse};
 
 /// Get all users (paginated)
 #[poem::handler]

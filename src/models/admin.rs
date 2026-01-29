@@ -8,4 +8,3 @@ pub struct RevocationResponse {
     pub tokens_revoked: u64,
     pub revoked_at: DateTime<Utc>,
 }
-

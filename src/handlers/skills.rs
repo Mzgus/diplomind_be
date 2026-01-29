@@ -1,4 +1,9 @@
-use crate::{db, errors::MyError, middleware::{self, jwt_auth::AuthUser}, models::skills::*};
+use crate::{
+    db,
+    errors::MyError,
+    middleware::{self, jwt_auth::AuthUser},
+    models::skills::*,
+};
 use poem::web::{Data, Json, Path};
 use sqlx::{Pool, Postgres};
 
@@ -13,7 +18,7 @@ pub async fn create_skill(
     if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
         return Err(MyError::Unauthorized);
     }
-    
+
     let skill = db::skills::create_skill(pool, data).await?;
     Ok(Json(skill))
 }
@@ -50,7 +55,7 @@ pub async fn update_skill(
     if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
         return Err(MyError::Unauthorized);
     }
-    
+
     let skill = db::skills::update_skill(pool, id, data).await?;
     Ok(Json(skill))
 }
@@ -63,7 +68,7 @@ pub async fn delete_skill(
     auth_user: AuthUser,
 ) -> Result<Json<Skill>, MyError> {
     middleware::rbac::require_admin(&auth_user.0)?;
-    
+
     let skill = db::skills::delete_skill(pool, id).await?;
     Ok(Json(skill))
 }
