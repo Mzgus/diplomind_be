@@ -10,16 +10,16 @@ pub async fn get_user_by_id<'e>(executor: impl PgExecutor<'e>, id: i32) -> Resul
     let query = sqlx::query_as(
         r#"
         SELECT 
+            a.id AS account_id,
             us.id AS user_id, 
             us.last_name AS user_lastname, 
             us.first_name AS user_firstname, 
             us.type_user AS user_role, 
             us.profile_picture AS user_profilepicture, 
-            us.active AS user_active, 
-            ua.email AS user_email, 
-            ua.pwd AS user_pwd
+            a.email AS user_email
         FROM "users_sheets" as us 
-        JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
+        JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
+        JOIN "accounts" as a ON aus.account_id = a.id
         WHERE us.id = $1
         "#,
     )
@@ -43,17 +43,17 @@ pub async fn get_user_by_email<'e>(
     let query = sqlx::query_as(
         r#"
         SELECT 
+            a.id AS account_id,
             us.id AS user_id, 
             us.last_name AS user_lastname, 
             us.first_name AS user_firstname, 
             us.type_user AS user_role, 
             us.profile_picture AS user_profilepicture, 
-            us.active AS user_active, 
-            ua.email AS user_email, 
-            ua.pwd AS user_pwd
+            a.email AS user_email
         FROM "users_sheets" as us 
-        JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
-        WHERE ua.email = $1
+        JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
+        JOIN "accounts" as a ON aus.account_id = a.id
+        WHERE a.email = $1
         "#,
     )
     .bind(email);
@@ -73,16 +73,16 @@ pub async fn get_all_users<'e>(executor: impl PgExecutor<'e>) -> Result<Vec<User
     let query = sqlx::query_as(
         r#"
         SELECT 
+            a.id AS account_id,
             us.id AS user_id, 
             us.last_name AS user_lastname, 
             us.first_name AS user_firstname, 
             us.type_user AS user_role, 
             us.profile_picture AS user_profilepicture, 
-            us.active AS user_active, 
-            ua.email AS user_email, 
-            ua.pwd AS user_pwd
+            a.email AS user_email
         FROM "users_sheets" as us
-        JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
+        JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
+        JOIN "accounts" as a ON aus.account_id = a.id
         ORDER BY us.last_name, us.first_name
         "#,
     );
@@ -107,7 +107,7 @@ pub async fn get_all_users_paginated<'e>(
         r#"
         SELECT COUNT(*) 
         FROM "users_sheets" as us
-        JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
+        JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
         "#,
     );
 
@@ -126,16 +126,16 @@ pub async fn get_all_users_paginated<'e>(
     let query = sqlx::query_as(
         r#"
         SELECT 
+            a.id AS account_id,
             us.id AS user_id, 
             us.last_name AS user_lastname, 
             us.first_name AS user_firstname, 
             us.type_user AS user_role, 
             us.profile_picture AS user_profilepicture, 
-            us.active AS user_active, 
-            ua.email AS user_email, 
-            ua.pwd AS user_pwd
+            a.email AS user_email
         FROM "users_sheets" as us
-        JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
+        JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
+        JOIN "accounts" as a ON aus.account_id = a.id
         ORDER BY us.last_name, us.first_name
         LIMIT $1 OFFSET $2
         "#,

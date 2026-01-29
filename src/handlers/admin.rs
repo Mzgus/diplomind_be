@@ -29,7 +29,10 @@ pub async fn deactivate_user(
     let user_sheet = db::users_sheets::set_user_active_status(pool, user_id, false).await?;
 
     // Revoke all user's refresh tokens
-    let _ = db::auth::revoke_user_refresh_tokens(pool, user_id).await;
+    // Need to find account_id associated with this user_sheet_id
+    if let Ok(user_info) = db::users::get_user_by_id(pool, user_id).await {
+        let _ = db::auth::revoke_account_refresh_tokens(pool, user_info.account_id).await;
+    }
 
     println!(
         "ADMIN ACTION: User {} deactivated by admin {}",

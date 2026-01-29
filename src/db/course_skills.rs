@@ -19,12 +19,12 @@ pub async fn link_skill_to_course<'e>(
     let course_skill: CourseSkill = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error linking skill to course: {:?}", err);
 
-        if let sqlx::Error::Database(db_err) = &err
-            && db_err.is_unique_violation()
-        {
-            return MyError::AlreadyExists {
-                entity: "Course-Skill association",
-            };
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "Course-Skill association",
+                };
+            }
         }
 
         MyError::DBErrors {

@@ -19,12 +19,12 @@ pub async fn assign_user_to_class<'e>(
     let user_class: UserClass = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error assigning user to class: {:?}", err);
 
-        if let sqlx::Error::Database(db_err) = &err
-            && db_err.is_unique_violation()
-        {
-            return MyError::AlreadyExists {
-                entity: "User-Class association",
-            };
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "User-Class association",
+                };
+            }
         }
 
         MyError::DBErrors {

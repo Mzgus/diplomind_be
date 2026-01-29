@@ -19,12 +19,12 @@ pub async fn assign_user_to_course<'e>(
     let user_course: UserCourse = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error assigning user to course: {:?}", err);
 
-        if let sqlx::Error::Database(db_err) = &err
-            && db_err.is_unique_violation()
-        {
-            return MyError::AlreadyExists {
-                entity: "User-Course association",
-            };
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "User-Course association",
+                };
+            }
         }
 
         MyError::DBErrors {

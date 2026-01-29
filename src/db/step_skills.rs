@@ -19,12 +19,12 @@ pub async fn link_skill_to_step<'e>(
     let step_skill: StepSkill = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error linking skill to step: {:?}", err);
 
-        if let sqlx::Error::Database(db_err) = &err
-            && db_err.is_unique_violation()
-        {
-            return MyError::AlreadyExists {
-                entity: "Step-Skill association",
-            };
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "Step-Skill association",
+                };
+            }
         }
 
         MyError::DBErrors {

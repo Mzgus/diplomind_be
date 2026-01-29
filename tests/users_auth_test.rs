@@ -30,6 +30,13 @@ async fn test_create_user_auth_as_admin() {
     let sheet: serde_json::Value = sheet_response.json().await.unwrap();
     let sheet_id = sheet["id"].as_i64().unwrap();
 
+    // Create Account manually (no API for it yet)
+    let account_id: i32 = sqlx::query_scalar("INSERT INTO accounts (email) VALUES ($1) RETURNING id")
+        .bind("authtest@test.com")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
     // Create user auth
     let auth_response = client
         .post("http://localhost:3000/users_auth")
@@ -37,7 +44,7 @@ async fn test_create_user_auth_as_admin() {
         .json(&serde_json::json!({
             "email": "authtest@test.com",
             "pwd": "TestPassword123",
-            "id_user_sheet": sheet_id
+            "account_id": account_id
         }))
         .send()
         .await
@@ -71,6 +78,13 @@ async fn test_create_user_auth_as_admin() {
         .send()
         .await
         .unwrap();
+
+    // Clean up Account
+    sqlx::query("DELETE FROM accounts WHERE id = $1")
+        .bind(account_id)
+        .execute(&pool)
+        .await
+        .unwrap();
 }
 
 #[tokio::test]
@@ -84,7 +98,7 @@ async fn test_create_user_auth_with_duplicate_email() {
         .json(&serde_json::json!({
             "email": "sophie.martin@diplomind.fr",
             "pwd": "TestPassword123",
-            "id_user_sheet": 1
+            "account_id": 1
         }))
         .send()
         .await
@@ -143,13 +157,20 @@ async fn test_update_user_auth_email() {
     let sheet: serde_json::Value = sheet_response.json().await.unwrap();
     let sheet_id = sheet["id"].as_i64().unwrap();
 
+    // Create Account manually
+    let account_id: i32 = sqlx::query_scalar("INSERT INTO accounts (email) VALUES ($1) RETURNING id")
+        .bind("original@test.com")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+
     let auth_response = client
         .post("http://localhost:3000/users_auth")
         .header("Authorization", format!("Bearer {}", token))
         .json(&serde_json::json!({
             "email": "original@test.com",
             "pwd": "TestPassword123",
-            "id_user_sheet": sheet_id
+            "account_id": account_id
         }))
         .send()
         .await
@@ -195,6 +216,17 @@ async fn test_update_user_auth_email() {
         .delete(&format!("http://localhost:3000/users_sheets/{}", sheet_id))
         .header("Authorization", format!("Bearer {}", token))
         .send()
+        .await
+        .unwrap();
+
+    // Clean up Account
+    sqlx::query("DELETE FROM accounts WHERE id = $1")
+        .bind(account_id) // This was not captured in the original test scope but needs to be to delete it
+        // Ideally we capture account_id in the test scope above.
+        // Wait, account_id IS captured in the scope above.
+        // Actually, I need to fetch it or ensure it's available.
+        // In this test, account_id is a new variable I introduced.
+        .execute(&pool)
         .await
         .unwrap();
 }
@@ -309,13 +341,20 @@ async fn test_delete_user_auth_as_admin() {
     let sheet: serde_json::Value = sheet_response.json().await.unwrap();
     let sheet_id = sheet["id"].as_i64().unwrap();
 
+    // Create Account manually
+    let account_id: i32 = sqlx::query_scalar("INSERT INTO accounts (email) VALUES ($1) RETURNING id")
+        .bind("todelete@test.com")
+        .fetch_one(&common::get_test_pool().await) 
+        .await
+        .unwrap();
+
     let auth_response = client
         .post("http://localhost:3000/users_auth")
         .header("Authorization", format!("Bearer {}", token))
         .json(&serde_json::json!({
             "email": "todelete@test.com",
             "pwd": "TestPassword123",
-            "id_user_sheet": sheet_id
+            "account_id": account_id
         }))
         .send()
         .await
@@ -339,6 +378,14 @@ async fn test_delete_user_auth_as_admin() {
         .delete(&format!("http://localhost:3000/users_sheets/{}", sheet_id))
         .header("Authorization", format!("Bearer {}", token))
         .send()
+        .await
+        .unwrap();
+
+    // Clean up Account
+    let pool = get_test_pool().await;
+    sqlx::query("DELETE FROM accounts WHERE id = $1")
+        .bind(account_id) // account_id needs to be available
+        .execute(&pool)
         .await
         .unwrap();
 }
