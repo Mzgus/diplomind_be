@@ -61,6 +61,16 @@ pub async fn main() -> Result<(), std::io::Error> {
                     "/verify_token",
                     get(handlers::auth::verify_token).with(JwtAuth::new(token_manager.clone())),
                 )
+                .at(
+                    "/me/profiles",
+                    get(handlers::auth::get_my_profiles)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
+                .at(
+                    "/auth/switch-profile",
+                    post(handlers::auth::switch_profile)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
                 // users routes (complete user information with JOIN)
                 .at(
                     "/users",

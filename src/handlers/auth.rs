@@ -138,3 +138,54 @@ pub async fn verify_token(
     // Just return the authenticated user
     Ok(Json(auth_user.0))
 }
+
+/// Get all profiles available for the current account
+#[poem::handler]
+pub async fn get_my_profiles(
+    Data(executor): Data<&Pool<Postgres>>,
+    auth_user: crate::middleware::jwt_auth::AuthUser,
+) -> Result<Json<Vec<models::UserSheet>>, errors::MyError> {
+    let profiles = db::auth::get_account_profiles(executor, auth_user.0.account_id).await?;
+    Ok(Json(profiles))
+}
+
+#[derive(serde::Deserialize)]
+pub struct SwitchProfileRequest {
+    pub user_sheet_id: i32,
+}
+
+/// Switch the current active profile (UserSheet) within the same Account
+#[poem::handler]
+pub async fn switch_profile(
+    Data(executor): Data<&Pool<Postgres>>,
+    Data(token_manager): Data<&TokenManager>,
+    Json(req): Json<SwitchProfileRequest>,
+    auth_user: crate::middleware::jwt_auth::AuthUser,
+    cookie_jar: &CookieJar,
+) -> Result<Json<models::AccessToken>, errors::MyError> {
+    // 1. Verify that the requested profile belongs to the current account
+    // This call will fail if the link doesn't exist
+    let new_user_info = db::auth::get_user_info_by_profile(
+        executor,
+        auth_user.0.account_id,
+        req.user_sheet_id,
+    )
+    .await?;
+
+    // 2. Generate new token pair for the new profile
+    let (access_token, refresh_token) =
+        match token_manager.generate_token_pair(token_manager.clone(), new_user_info) {
+            Ok(res) => res,
+            Err(err) => return Err(err),
+        };
+
+    // 3. Update the refresh token in the database (Account level) and cookie
+    // Reuse existing manage_token logic which handles rotation/insertion
+    token_manager
+        .manage_token(executor, cookie_jar, &refresh_token, auth_user.0.account_id)
+        .await?;
+
+    Ok(Json(crate::AccessToken {
+        token: access_token,
+    }))
+}

@@ -258,3 +258,65 @@ pub async fn get_credentials_by_email<'e>(
     };
     Ok(record)
 }
+
+/// Get all profiles (user sheets) for a specific account
+pub async fn get_account_profiles<'e>(
+    executor: impl sqlx::PgExecutor<'e>,
+    account_id: i32,
+) -> Result<Vec<UserSheet>, MyError> {
+    let query = sqlx::query_as(
+        r#"
+        SELECT us.*
+        FROM "users_sheets" us
+        JOIN "accounts_users_sheets" aus ON us.id = aus.user_sheet_id
+        WHERE aus.account_id = $1
+        ORDER BY us.type_user, us.last_name
+        "#,
+    )
+    .bind(account_id);
+
+    let profiles: Vec<UserSheet> = query.fetch_all(executor).await.map_err(|err| {
+        eprintln!("Error fetching account profiles: {:?}", err);
+        MyError::DBErrors {
+            entity: "Failed to fetch account profiles",
+        }
+    })?;
+
+    Ok(profiles)
+}
+
+/// Get a specific user profile (sheet) ensuring it belongs to the given account
+pub async fn get_user_info_by_profile<'e>(
+    executor: impl sqlx::PgExecutor<'e>,
+    account_id: i32,
+    user_sheet_id: i32,
+) -> Result<User, MyError> {
+    let mut query = sqlx::query_as(
+        r#"
+        SELECT 
+            a.id AS account_id,
+            us.id AS user_id,
+            us.last_name AS user_lastname,
+            us.first_name AS user_firstname,
+            us.type_user AS user_role,
+            us.profile_picture AS user_profilepicture,
+            a.email AS user_email
+        FROM "users_sheets" us
+        JOIN "accounts_users_sheets" aus ON aus.user_sheet_id = us.id
+        JOIN "accounts" a ON a.id = aus.account_id
+        WHERE a.id = $1 AND us.id = $2
+        LIMIT 1
+        "#,
+    );
+    query = query.bind(account_id).bind(user_sheet_id);
+
+    let user_info: User = match query.fetch_one(executor).await {
+        Ok(res) => res,
+        Err(_) => {
+            return Err(MyError::NotFound {
+                entity: "Profile not found for this account",
+            });
+        }
+    };
+    Ok(user_info)
+}
