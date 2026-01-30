@@ -39,46 +39,48 @@ pub async fn link_skill_to_course<'e>(
 pub async fn get_course_skills<'e>(
     executor: impl PgExecutor<'e>,
     course_id: i32,
-) -> Result<Vec<CourseSkill>, MyError> {
+) -> Result<Vec<crate::models::skills::Skill>, MyError> {
     let query = sqlx::query_as(
         r#"
-        SELECT * FROM "course_skills"
-        WHERE "course_id" = $1
+        SELECT s.* FROM "skills" s
+        JOIN "course_skills" cs ON s.id = cs.skill_id
+        WHERE cs.course_id = $1
         "#,
     )
     .bind(course_id);
 
-    let course_skills: Vec<CourseSkill> = query.fetch_all(executor).await.map_err(|err| {
+    let skills: Vec<crate::models::skills::Skill> = query.fetch_all(executor).await.map_err(|err| {
         eprintln!("Error fetching course skills: {:?}", err);
         MyError::DBErrors {
             entity: "Failed to fetch course skills",
         }
     })?;
 
-    Ok(course_skills)
+    Ok(skills)
 }
 
 /// Get all courses for a skill
 pub async fn get_skill_courses<'e>(
     executor: impl PgExecutor<'e>,
     skill_id: i32,
-) -> Result<Vec<CourseSkill>, MyError> {
+) -> Result<Vec<crate::models::courses::Course>, MyError> {
     let query = sqlx::query_as(
         r#"
-        SELECT * FROM "course_skills"
-        WHERE "skill_id" = $1
+        SELECT c.* FROM "courses" c
+        JOIN "course_skills" cs ON c.id = cs.course_id
+        WHERE cs.skill_id = $1
         "#,
     )
     .bind(skill_id);
 
-    let skill_courses: Vec<CourseSkill> = query.fetch_all(executor).await.map_err(|err| {
+    let courses: Vec<crate::models::courses::Course> = query.fetch_all(executor).await.map_err(|err| {
         eprintln!("Error fetching skill courses: {:?}", err);
         MyError::DBErrors {
             entity: "Failed to fetch skill courses",
         }
     })?;
 
-    Ok(skill_courses)
+    Ok(courses)
 }
 
 /// Unlink a skill from a course

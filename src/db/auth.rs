@@ -160,7 +160,8 @@ pub async fn login<'e>(
             us.first_name AS user_firstname,
             us.type_user AS user_role,
             us.profile_picture AS user_profilepicture,
-            a.email AS user_email
+            a.email AS user_email,
+            us.active AS user_active
         FROM "users_auth" ua
         JOIN "accounts" a ON ua.account_id = a.id
         JOIN "accounts_users_sheets" aus ON aus.account_id = a.id
@@ -194,7 +195,8 @@ pub async fn get_user_info_by_token<'e>(
             us.first_name AS user_firstname,
             us.type_user AS user_role,
             us.profile_picture AS user_profilepicture,
-            a.email AS user_email
+            a.email AS user_email,
+            us.active AS user_active
         FROM "refresh_tokens" rt
         JOIN "accounts" a ON rt.account_id = a.id
         JOIN "accounts_users_sheets" aus ON aus.account_id = a.id
@@ -300,7 +302,8 @@ pub async fn get_user_info_by_profile<'e>(
             us.first_name AS user_firstname,
             us.type_user AS user_role,
             us.profile_picture AS user_profilepicture,
-            a.email AS user_email
+            a.email AS user_email,
+            us.active AS user_active
         FROM "users_sheets" us
         JOIN "accounts_users_sheets" aus ON aus.user_sheet_id = us.id
         JOIN "accounts" a ON a.id = aus.account_id

@@ -22,9 +22,9 @@ pub async fn get_step_skills(
     Data(pool): Data<&Pool<Postgres>>,
     Path(step_id): Path<i32>,
     _auth_user: AuthUser,
-) -> Result<Json<Vec<StepSkill>>, MyError> {
-    let step_skills = db::step_skills::get_step_skills(pool, step_id).await?;
-    Ok(Json(step_skills))
+) -> Result<Json<Vec<crate::models::skills::Skill>>, MyError> {
+    let skills = db::step_skills::get_step_skills(pool, step_id).await?;
+    Ok(Json(skills))
 }
 
 /// Get all steps for a skill
@@ -33,9 +33,9 @@ pub async fn get_skill_steps(
     Data(pool): Data<&Pool<Postgres>>,
     Path(skill_id): Path<i32>,
     _auth_user: AuthUser,
-) -> Result<Json<Vec<StepSkill>>, MyError> {
-    let skill_steps = db::step_skills::get_skill_steps(pool, skill_id).await?;
-    Ok(Json(skill_steps))
+) -> Result<Json<Vec<crate::models::steps::Step>>, MyError> {
+    let steps = db::step_skills::get_skill_steps(pool, skill_id).await?;
+    Ok(Json(steps))
 }
 
 /// Unlink a skill from a step (admin/teacher)

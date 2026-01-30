@@ -15,7 +15,7 @@ pub struct UserAuthRecord {
 pub struct CreateUserAuth {
     pub email: String,
     pub pwd: String,
-    pub account_id: i32,
+    pub account_id: Option<i32>,
 }
 
 /// Data for updating user auth email

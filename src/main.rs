@@ -99,6 +99,12 @@ pub async fn main() -> Result<(), std::io::Error> {
                         .delete(handlers::users_sheets::delete_user_sheet)
                         .with(JwtAuth::new(token_manager.clone())),
                 )
+                // accounts routes
+                .at(
+                    "/accounts",
+                    post(handlers::accounts::create_account)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
                 // users_auth CRUD routes
                 .at(
                     "/users_auth",

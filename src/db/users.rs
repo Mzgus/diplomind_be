@@ -16,7 +16,8 @@ pub async fn get_user_by_id<'e>(executor: impl PgExecutor<'e>, id: i32) -> Resul
             us.first_name AS user_firstname, 
             us.type_user AS user_role, 
             us.profile_picture AS user_profilepicture, 
-            a.email AS user_email
+            a.email AS user_email,
+            us.active AS user_active
         FROM "users_sheets" as us 
         JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
         JOIN "accounts" as a ON aus.account_id = a.id
@@ -49,7 +50,8 @@ pub async fn get_user_by_email<'e>(
             us.first_name AS user_firstname, 
             us.type_user AS user_role, 
             us.profile_picture AS user_profilepicture, 
-            a.email AS user_email
+            a.email AS user_email,
+            us.active AS user_active
         FROM "users_sheets" as us 
         JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
         JOIN "accounts" as a ON aus.account_id = a.id
@@ -79,7 +81,8 @@ pub async fn get_all_users<'e>(executor: impl PgExecutor<'e>) -> Result<Vec<User
             us.first_name AS user_firstname, 
             us.type_user AS user_role, 
             us.profile_picture AS user_profilepicture, 
-            a.email AS user_email
+            a.email AS user_email,
+            us.active AS user_active
         FROM "users_sheets" as us
         JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
         JOIN "accounts" as a ON aus.account_id = a.id
@@ -132,7 +135,8 @@ pub async fn get_all_users_paginated<'e>(
             us.first_name AS user_firstname, 
             us.type_user AS user_role, 
             us.profile_picture AS user_profilepicture, 
-            a.email AS user_email
+            a.email AS user_email,
+            us.active AS user_active
         FROM "users_sheets" as us
         JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
         JOIN "accounts" as a ON aus.account_id = a.id

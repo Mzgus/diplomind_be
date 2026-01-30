@@ -9,6 +9,7 @@ pub struct UserSheet {
     pub first_name: String,
     pub type_user: String,
     pub profile_picture: Option<String>,
+    pub active: bool,
 }
 
 /// Data required to create a new user sheet
@@ -18,6 +19,7 @@ pub struct CreateUserSheet {
     pub first_name: String,
     pub type_user: String,
     pub profile_picture: Option<String>,
+    pub account_id: Option<i32>,
 }
 
 /// Data for updating an existing user sheet (all fields optional)
@@ -27,4 +29,6 @@ pub struct UpdateUserSheet {
     pub first_name: Option<String>,
     pub type_user: Option<String>,
     pub profile_picture: Option<String>,
+    pub active: Option<bool>,
+    pub account_id: Option<i32>,
 }

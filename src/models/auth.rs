@@ -18,10 +18,9 @@ pub struct User {
     pub user_lastname: String,
     pub user_firstname: String,
     pub user_role: String,
-    pub user_profilepicture: String,
+    pub user_profilepicture: Option<String>,
     pub user_email: String,
-    // Removed direct pwd mapping as it's not needed in claims usually, but if used elsewhere handle with care.
-    // Removed user_active from claims to reduce size, check db if critical.
+    pub user_active: bool,
 }
 
 #[derive(Debug, sqlx::FromRow, serde::Deserialize, serde::Serialize)]

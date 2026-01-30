@@ -60,10 +60,20 @@ pub async fn update_user_sheet(
     Json(data): Json<UpdateUserSheet>,
     auth_user: AuthUser, // Requires authentication
 ) -> Result<Json<UserSheet>, MyError> {
+    println!("Update request for ID {}: {:?}", id, data); // Debug logging
     // Admin or self can update
     middleware::rbac::can_modify_user(&auth_user.0, id)?;
 
+    // Extract account_id before the update (since data will be moved)
+    let account_id_to_link = data.account_id;
+    
     let user_sheet = db::users_sheets::update_user_sheet(pool, id, data).await?;
+    
+    // If account_id was provided, link the sheet to the account
+    if let Some(acc_id) = account_id_to_link {
+        db::users_sheets::link_account_to_sheet(pool, acc_id, id).await?;
+    }
+    
     Ok(Json(user_sheet))
 }
 
