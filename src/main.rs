@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 #[tokio::main]
 pub async fn main() -> Result<(), std::io::Error> {
-    dotenv().unwrap();
+    dotenv().ok();
     let db_url = match std::env::var("DATABASE_URL") {
         Ok(res) => res,
         Err(_) => {
@@ -63,13 +63,11 @@ pub async fn main() -> Result<(), std::io::Error> {
                 )
                 .at(
                     "/me/profiles",
-                    get(handlers::auth::get_my_profiles)
-                        .with(JwtAuth::new(token_manager.clone())),
+                    get(handlers::auth::get_my_profiles).with(JwtAuth::new(token_manager.clone())),
                 )
                 .at(
                     "/auth/switch-profile",
-                    post(handlers::auth::switch_profile)
-                        .with(JwtAuth::new(token_manager.clone())),
+                    post(handlers::auth::switch_profile).with(JwtAuth::new(token_manager.clone())),
                 )
                 // users routes (complete user information with JOIN)
                 .at(
