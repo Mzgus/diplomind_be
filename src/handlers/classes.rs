@@ -31,12 +31,25 @@ pub async fn get_class(
     Ok(Json(class))
 }
 
-/// Get all classes
+/// Get all classes (admin: all, teacher: own only, student: forbidden)
 #[poem::handler]
 pub async fn get_all_classes(
     Data(pool): Data<&Pool<Postgres>>,
-    _auth_user: AuthUser, // Requires authentication
+    auth_user: AuthUser,
 ) -> Result<Json<Vec<Class>>, MyError> {
+    let role = &auth_user.0.user_role;
+
+    if role == "student" {
+        return Err(MyError::Unauthorized);
+    }
+
+    if role == "teacher" {
+        // Teacher sees only their own classes
+        let classes = db::classes::get_teacher_classes(pool, auth_user.0.user_id).await?;
+        return Ok(Json(classes));
+    }
+
+    // Admin sees all
     let classes = db::classes::get_all_classes(pool).await?;
     Ok(Json(classes))
 }
