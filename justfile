@@ -13,8 +13,11 @@ start:
 restart:
   docker compose start
 
+seed:
+  docker exec -i db psql -U diplomind_u -d diplomind_db -f /seed/seed.sql
+
 test_query:
-  docker compose exec db psql -U diplomind_u -d diplomind_db -c "SELECT   \* FROM users_sheets;"
+  docker compose exec db psql -U diplomind_u -d diplomind_db -c "SELECT * FROM users_sheets;"
 
 psql:
   docker compose exec db psql -U diplomind_u -d diplomind_db
@@ -37,8 +40,11 @@ sudo_start:
 sudo_restart:
   sudo docker compose start
 
+sudo_seed:
+  sudo docker exec -i db psql -U diplomind_u -d diplomind_db -f /seed/seed.sql
+
 sudo_test_query:
-  sudo docker compose exec db psql -U diplomind_u -d diplomind_db -c "SELECT   \* FROM users_sheets;"
+  sudo docker compose exec db psql -U diplomind_u -d diplomind_db -c "SELECT * FROM users_sheets;"
 
 sudo_psql:
   sudo docker compose exec db psql -U diplomind_u -d diplomind_db
