@@ -76,17 +76,17 @@ pub async fn get_all_users<'e>(executor: impl PgExecutor<'e>) -> Result<Vec<User
         r#"
         SELECT 
             a.id AS account_id,
-            us.id AS user_id, 
-            us.last_name AS user_lastname, 
-            us.first_name AS user_firstname, 
-            us.type_user AS user_role, 
+            COALESCE(us.id, -1) AS user_id, 
+            COALESCE(us.last_name, '') AS user_lastname, 
+            COALESCE(us.first_name, '') AS user_firstname, 
+            COALESCE(us.type_user, 'non-assigné') AS user_role, 
             us.profile_picture AS user_profilepicture, 
             a.email AS user_email,
-            us.active AS user_active
-        FROM "users_sheets" as us
-        JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
-        JOIN "accounts" as a ON aus.account_id = a.id
-        ORDER BY us.last_name, us.first_name
+            COALESCE(us.active, false) AS user_active
+        FROM "accounts" as a
+        LEFT JOIN "accounts_users_sheets" as aus ON a.id = aus.account_id
+        LEFT JOIN "users_sheets" as us ON aus.user_sheet_id = us.id
+        ORDER BY us.last_name NULLS LAST, us.first_name NULLS LAST
         "#,
     );
 
@@ -109,8 +109,9 @@ pub async fn get_all_users_paginated<'e>(
     let count_query = sqlx::query(
         r#"
         SELECT COUNT(*) 
-        FROM "users_sheets" as us
-        JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
+        FROM "accounts" as a
+        LEFT JOIN "accounts_users_sheets" as aus ON a.id = aus.account_id
+        LEFT JOIN "users_sheets" as us ON aus.user_sheet_id = us.id
         "#,
     );
 
@@ -130,17 +131,17 @@ pub async fn get_all_users_paginated<'e>(
         r#"
         SELECT 
             a.id AS account_id,
-            us.id AS user_id, 
-            us.last_name AS user_lastname, 
-            us.first_name AS user_firstname, 
-            us.type_user AS user_role, 
+            COALESCE(us.id, -1) AS user_id, 
+            COALESCE(us.last_name, '') AS user_lastname, 
+            COALESCE(us.first_name, '') AS user_firstname, 
+            COALESCE(us.type_user, 'non-assigné') AS user_role, 
             us.profile_picture AS user_profilepicture, 
             a.email AS user_email,
-            us.active AS user_active
-        FROM "users_sheets" as us
-        JOIN "accounts_users_sheets" as aus ON us.id = aus.user_sheet_id
-        JOIN "accounts" as a ON aus.account_id = a.id
-        ORDER BY us.last_name, us.first_name
+            COALESCE(us.active, false) AS user_active
+        FROM "accounts" as a
+        LEFT JOIN "accounts_users_sheets" as aus ON a.id = aus.account_id
+        LEFT JOIN "users_sheets" as us ON aus.user_sheet_id = us.id
+        ORDER BY us.last_name NULLS LAST, us.first_name NULLS LAST
         LIMIT $1 OFFSET $2
         "#,
     )
