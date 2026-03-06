@@ -265,6 +265,16 @@ pub async fn main() -> Result<(), std::io::Error> {
                         .with(JwtAuth::new(token_manager.clone())),
                 )
                 .at(
+                    "/users/:id/steps",
+                    get(handlers::user_courses::get_user_steps)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
+                .at(
+                    "/users/:id/skills",
+                    get(handlers::user_courses::get_user_skills)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
+                .at(
                     "/courses/:id/users",
                     get(handlers::user_courses::get_course_users)
                         .with(JwtAuth::new(token_manager.clone())),

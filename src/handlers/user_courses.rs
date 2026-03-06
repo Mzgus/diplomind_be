@@ -16,15 +16,47 @@ pub async fn assign_user_to_course(
     Ok(Json(user_course))
 }
 
-/// Get all courses for a user
+/// Get all courses for a user (returns full Course objects)
 #[poem::handler]
 pub async fn get_user_courses(
     Data(pool): Data<&Pool<Postgres>>,
     Path(user_id): Path<i32>,
-    _auth_user: AuthUser,
-) -> Result<Json<Vec<UserCourse>>, MyError> {
-    let user_courses = db::user_courses::get_user_courses(pool, user_id).await?;
-    Ok(Json(user_courses))
+    auth_user: AuthUser,
+) -> Result<Json<Vec<crate::models::courses::Course>>, MyError> {
+    // Students can only access their own data
+    if auth_user.0.user_role == "student" && auth_user.0.user_id != user_id {
+        return Err(MyError::Unauthorized);
+    }
+    let courses = db::user_courses::get_user_courses(pool, user_id).await?;
+    Ok(Json(courses))
+}
+
+/// Get all steps accessible to a user
+#[poem::handler]
+pub async fn get_user_steps(
+    Data(pool): Data<&Pool<Postgres>>,
+    Path(user_id): Path<i32>,
+    auth_user: AuthUser,
+) -> Result<Json<Vec<crate::models::steps::Step>>, MyError> {
+    if auth_user.0.user_role == "student" && auth_user.0.user_id != user_id {
+        return Err(MyError::Unauthorized);
+    }
+    let steps = db::user_courses::get_user_steps(pool, user_id).await?;
+    Ok(Json(steps))
+}
+
+/// Get all skills accessible to a user
+#[poem::handler]
+pub async fn get_user_skills(
+    Data(pool): Data<&Pool<Postgres>>,
+    Path(user_id): Path<i32>,
+    auth_user: AuthUser,
+) -> Result<Json<Vec<crate::models::skills::Skill>>, MyError> {
+    if auth_user.0.user_role == "student" && auth_user.0.user_id != user_id {
+        return Err(MyError::Unauthorized);
+    }
+    let skills = db::user_courses::get_user_skills(pool, user_id).await?;
+    Ok(Json(skills))
 }
 
 /// Get all users in a course

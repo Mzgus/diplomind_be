@@ -250,35 +250,45 @@ INSERT INTO user_classes (user_id, class_id) VALUES
 
 -- Web Full Stack (quelques étudiants)
 INSERT INTO user_classes (user_id, class_id) VALUES
-(7, 2), (9, 2), (11, 2), (13, 2);
+(6, 2), (7, 2), (9, 2), (11, 2), (13, 2);
 
 -- ============================================
 -- 12. Assign Students to Courses
 -- ============================================
+-- Note: users_sheets IDs: 6=Emma, 7=Louis, 8=Chloé, 9=Hugo, 10=Léa
+--                         11=Nathan, 12=Manon, 13=Tom, 14=Sarah, 15=Arthur
 
--- Backend Development
+-- Backend Development (course 1)
 INSERT INTO user_courses (user_id, course_id) VALUES
-(7, 1), (8, 1), (9, 1), (10, 1), (11, 1), (12, 1);
+(6, 1), (7, 1), (8, 1), (9, 1), (10, 1), (11, 1), (12, 1);
 
--- Frontend React
+-- Frontend React (course 2)
 INSERT INTO user_courses (user_id, course_id) VALUES
-(7, 2), (9, 2), (11, 2), (13, 2), (15, 2);
+(6, 2), (7, 2), (9, 2), (11, 2), (13, 2), (15, 2);
 
--- PostgreSQL
+-- PostgreSQL (course 3)
 INSERT INTO user_courses (user_id, course_id) VALUES
-(7, 3), (8, 3), (10, 3), (12, 3), (14, 3);
+(6, 3), (7, 3), (8, 3), (10, 3), (12, 3), (14, 3);
 
 -- ============================================
 -- 13. Skill Validations
 -- ============================================
 
--- Emma (user 7) - Étudiante avancée
+-- Emma (user sheet_id=6) - Étudiante avancée
 INSERT INTO skill_validations (user_id, skill_id, status, validated_at, validated_by) VALUES
-(7, 1, 'validated', NOW() - INTERVAL '10 days', 4), -- Rust validé par Marie
-(7, 2, 'validated', NOW() - INTERVAL '8 days', 4),  -- API Design validé
-(7, 3, 'validated', NOW() - INTERVAL '5 days', 5),  -- PostgreSQL validé par Jean
-(7, 6, 'pending', NULL, NULL),                       -- React en attente
-(7, 13, 'validated', NOW() - INTERVAL '15 days', 4); -- Git validé
+(6, 1, 'validated', NOW() - INTERVAL '10 days', 4), -- Rust validé par Marie
+(6, 2, 'validated', NOW() - INTERVAL '8 days', 4),  -- API Design validé
+(6, 3, 'validated', NOW() - INTERVAL '5 days', 5),  -- PostgreSQL validé par Jean
+(6, 6, 'pending', NULL, NULL),                       -- React en attente
+(6, 13, 'validated', NOW() - INTERVAL '15 days', 4); -- Git validé
+
+-- Louis (user sheet_id=7) - Étudiant avancé
+INSERT INTO skill_validations (user_id, skill_id, status, validated_at, validated_by) VALUES
+(7, 1, 'validated', NOW() - INTERVAL '10 days', 4),
+(7, 2, 'validated', NOW() - INTERVAL '8 days', 4),
+(7, 3, 'validated', NOW() - INTERVAL '5 days', 5),
+(7, 6, 'pending', NULL, NULL),
+(7, 13, 'validated', NOW() - INTERVAL '15 days', 4);
 
 -- Louis (user 8) - Étudiant moyen
 INSERT INTO skill_validations (user_id, skill_id, status, validated_at, validated_by) VALUES
