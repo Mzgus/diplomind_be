@@ -1,0 +1,6 @@
+FROM postgres:alpine
+COPY /mig/ /docker-entrypoint-initdb.d/
+# Uncomment the following line if you want to initialize the database with seed data
+# COPY /seed/ /docker-entrypoint-initdb.d/
+# Uncomment the following line if you want to initialize the database without seed data but permit the use of seed data later
+# COPY /seed/ /seed/ 
