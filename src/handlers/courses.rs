@@ -7,16 +7,14 @@ use crate::{
 use poem::web::{Data, Json, Path};
 use sqlx::{Pool, Postgres};
 
-/// Create a new course (admin/teacher only)
+/// Create a new course (admin only)
 #[poem::handler]
 pub async fn create_course(
     Data(pool): Data<&Pool<Postgres>>,
     Json(data): Json<CreateCourse>,
     auth_user: AuthUser,
 ) -> Result<Json<Course>, MyError> {
-    if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
-        return Err(MyError::Unauthorized);
-    }
+    middleware::rbac::require_admin(&auth_user.0)?;
 
     let course = db::courses::create_course(pool, data).await?;
     Ok(Json(course))
@@ -43,7 +41,7 @@ pub async fn get_all_courses(
     Ok(Json(courses))
 }
 
-/// Update a course (admin/teacher only)
+/// Update a course (admin only)
 #[poem::handler]
 pub async fn update_course(
     Data(pool): Data<&Pool<Postgres>>,
@@ -51,9 +49,7 @@ pub async fn update_course(
     Json(data): Json<UpdateCourse>,
     auth_user: AuthUser,
 ) -> Result<Json<Course>, MyError> {
-    if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
-        return Err(MyError::Unauthorized);
-    }
+    middleware::rbac::require_admin(&auth_user.0)?;
 
     let course = db::courses::update_course(pool, id, data).await?;
     Ok(Json(course))

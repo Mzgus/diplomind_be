@@ -35,27 +35,88 @@ pub async fn assign_user_to_course<'e>(
     Ok(user_course)
 }
 
-/// Get all courses for a user
+/// Get all courses for a user (returns full Course objects)
 pub async fn get_user_courses<'e>(
     executor: impl PgExecutor<'e>,
     user_id: i32,
-) -> Result<Vec<UserCourse>, MyError> {
+) -> Result<Vec<crate::models::courses::Course>, MyError> {
     let query = sqlx::query_as(
         r#"
-        SELECT * FROM "user_courses"
-        WHERE "user_id" = $1
+        SELECT c.*
+        FROM courses c
+        JOIN user_courses uc ON c.id = uc.course_id
+        WHERE uc.user_id = $1
+        ORDER BY c.name
         "#,
     )
     .bind(user_id);
 
-    let user_courses: Vec<UserCourse> = query.fetch_all(executor).await.map_err(|err| {
-        eprintln!("Error fetching user courses: {:?}", err);
-        MyError::DBErrors {
-            entity: "Failed to fetch user courses",
-        }
-    })?;
+    let courses: Vec<crate::models::courses::Course> =
+        query.fetch_all(executor).await.map_err(|err| {
+            eprintln!("Error fetching user courses: {:?}", err);
+            MyError::DBErrors {
+                entity: "Failed to fetch user courses",
+            }
+        })?;
 
-    Ok(user_courses)
+    Ok(courses)
+}
+
+/// Get all steps accessible to a user (via their enrolled courses → projects → steps)
+pub async fn get_user_steps<'e>(
+    executor: impl PgExecutor<'e>,
+    user_id: i32,
+) -> Result<Vec<crate::models::steps::Step>, MyError> {
+    let query = sqlx::query_as(
+        r#"
+        SELECT DISTINCT s.*
+        FROM steps s
+        JOIN projects p ON s.project_id = p.id
+        JOIN courses c ON p.course_id = c.id
+        JOIN user_courses uc ON c.id = uc.course_id
+        WHERE uc.user_id = $1
+        ORDER BY s.name
+        "#,
+    )
+    .bind(user_id);
+
+    let steps: Vec<crate::models::steps::Step> =
+        query.fetch_all(executor).await.map_err(|err| {
+            eprintln!("Error fetching user steps: {:?}", err);
+            MyError::DBErrors {
+                entity: "Failed to fetch user steps",
+            }
+        })?;
+
+    Ok(steps)
+}
+
+/// Get all skills accessible to a user (via their enrolled courses → course_skills)
+pub async fn get_user_skills<'e>(
+    executor: impl PgExecutor<'e>,
+    user_id: i32,
+) -> Result<Vec<crate::models::skills::Skill>, MyError> {
+    let query = sqlx::query_as(
+        r#"
+        SELECT DISTINCT sk.*
+        FROM skills sk
+        JOIN course_skills cs ON sk.id = cs.skill_id
+        JOIN user_courses uc ON cs.course_id = uc.course_id
+        WHERE uc.user_id = $1
+        ORDER BY sk.name
+        "#,
+    )
+    .bind(user_id);
+
+    let skills: Vec<crate::models::skills::Skill> =
+        query.fetch_all(executor).await.map_err(|err| {
+            eprintln!("Error fetching user skills: {:?}", err);
+            MyError::DBErrors {
+                entity: "Failed to fetch user skills",
+            }
+        })?;
+
+    Ok(skills)
 }
 
 /// Get all users in a course

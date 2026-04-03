@@ -39,14 +39,13 @@ pub async fn get_user_sheet(
     Ok(Json(user_sheet))
 }
 
-/// Get all user sheets
+/// Get all user sheets (admin and teacher: read-only)
 #[poem::handler]
 pub async fn get_all_user_sheets(
     Data(pool): Data<&Pool<Postgres>>,
-    auth_user: AuthUser, // Requires authentication
+    auth_user: AuthUser,
 ) -> Result<Json<Vec<UserSheet>>, MyError> {
-    // Only admin (or maybe teacher?) can view all. Let's start with admin.
-    middleware::rbac::require_admin(&auth_user.0)?;
+    middleware::rbac::require_admin_or_teacher(&auth_user.0)?;
 
     let user_sheets = db::users_sheets::get_all_user_sheets(pool).await?;
     Ok(Json(user_sheets))
@@ -66,14 +65,14 @@ pub async fn update_user_sheet(
 
     // Extract account_id before the update (since data will be moved)
     let account_id_to_link = data.account_id;
-    
+
     let user_sheet = db::users_sheets::update_user_sheet(pool, id, data).await?;
-    
+
     // If account_id was provided, link the sheet to the account
     if let Some(acc_id) = account_id_to_link {
         db::users_sheets::link_account_to_sheet(pool, acc_id, id).await?;
     }
-    
+
     Ok(Json(user_sheet))
 }
 

@@ -8,6 +8,14 @@ pub fn require_admin(user: &User) -> Result<(), MyError> {
     Ok(())
 }
 
+/// Check if the user has the 'admin' or 'teacher' role
+pub fn require_admin_or_teacher(user: &User) -> Result<(), MyError> {
+    if user.user_role == "admin" || user.user_role == "teacher" {
+        return Ok(());
+    }
+    Err(MyError::Unauthorized)
+}
+
 /// Check if the user is admin or accessing their own resource
 pub fn require_admin_or_self(user: &User, target_id: i32) -> Result<(), MyError> {
     if user.user_role == "admin" || user.user_id == target_id {
