@@ -1,8 +1,6 @@
 services:
   db:
-    build:
-      context: .
-      dockerfile: dockerfile.db
+    image: postgres
     container_name: diplomind_db
     restart: always
     shm_size: 128mb
@@ -17,7 +15,7 @@ services:
     networks:
       - diplomind_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -25,7 +23,6 @@ services:
   api:
     build: 
       context: .
-      dockerfile: dockerfile.api
     container_name: diplomind_api
     restart: always
     depends_on:
