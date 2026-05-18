@@ -19,7 +19,7 @@ restart:
   docker compose start
 
 seed:
-  docker exec diplomind_db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -f /seed/seed.sq
+  docker exec diplomind_db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -f /seed/seed.sql
 
 test_query:
   docker compose exec diplomind_db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "SELECT * FROM users_sheets;"
@@ -49,7 +49,7 @@ sudo_restart:
   sudo docker compose start
 
 sudo_seed:
-  sudo docker exec diplomind_db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -f /seed/seed.sq
+  sudo docker exec diplomind_db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -f /seed/seed.sql
 
 sudo_test_query:
   sudo docker compose exec diplomind_db psql -U ${POSTGRES_USER} -d ${POSTGRES_DB} -c "SELECT * FROM users_sheets;"
