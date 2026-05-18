@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS users_sheets (
     id SERIAL PRIMARY KEY,
     last_name TEXT NOT NULL,
     first_name TEXT NOT NULL,
-    type_user TEXT NOT NULL,
+    type_user TEXT NOT NULL CHECK (type_user IN ('admin', 'teacher', 'student')),
     profile_picture TEXT,
     active BOOLEAN DEFAULT TRUE
 );

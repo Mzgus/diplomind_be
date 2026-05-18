@@ -253,22 +253,33 @@ INSERT INTO user_classes (user_id, class_id) VALUES
 (6, 2), (7, 2), (9, 2), (11, 2), (13, 2);
 
 -- ============================================
--- 12. Assign Students to Courses
+-- 12. Assign Teachers to Courses
 -- ============================================
--- Note: users_sheets IDs: 6=Emma, 7=Louis, 8=Chloé, 9=Hugo, 10=Léa
---                         11=Nathan, 12=Manon, 13=Tom, 14=Sarah, 15=Arthur
+-- Note: users_sheets IDs for teachers: 3=Marie, 4=Jean, 5=Claire, 16=Alex
 
 -- Backend Development (course 1)
 INSERT INTO user_courses (user_id, course_id) VALUES
-(6, 1), (7, 1), (8, 1), (9, 1), (10, 1), (11, 1), (12, 1);
+(3, 1), (4, 1);
 
 -- Frontend React (course 2)
 INSERT INTO user_courses (user_id, course_id) VALUES
-(6, 2), (7, 2), (9, 2), (11, 2), (13, 2), (15, 2);
+(4, 2), (5, 2);
 
 -- PostgreSQL (course 3)
 INSERT INTO user_courses (user_id, course_id) VALUES
-(6, 3), (7, 3), (8, 3), (10, 3), (12, 3), (14, 3);
+(3, 3), (5, 3);
+
+-- Architecture Microservices (course 4)
+INSERT INTO user_courses (user_id, course_id) VALUES
+(4, 4), (16, 4);
+
+-- DevOps & CI/CD (course 5)
+INSERT INTO user_courses (user_id, course_id) VALUES
+(5, 5), (16, 5);
+
+-- Sécurité des Applications Web (course 6)
+INSERT INTO user_courses (user_id, course_id) VALUES
+(3, 6), (16, 6);
 
 -- ============================================
 -- 13. Skill Validations
