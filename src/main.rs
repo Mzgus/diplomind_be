@@ -91,6 +91,12 @@ pub async fn main() -> Result<(), std::io::Error> {
                         .with(JwtAuth::new(token_manager.clone())),
                 )
                 .at(
+                    "/users_sheets/:id/account",
+                    post(handlers::users_sheets::link_sheet_to_account)
+                        .delete(handlers::users_sheets::unlink_account_from_sheet)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
+                .at(
                     "/users_sheets/:id",
                     get(handlers::users_sheets::get_user_sheet)
                         .put(handlers::users_sheets::update_user_sheet)

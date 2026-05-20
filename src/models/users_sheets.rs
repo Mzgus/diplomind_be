@@ -30,5 +30,10 @@ pub struct UpdateUserSheet {
     pub type_user: Option<String>,
     pub profile_picture: Option<String>,
     pub active: Option<bool>,
-    pub account_id: Option<i32>,
+}
+
+/// Body for linking a sheet to an account
+#[derive(Debug, Deserialize)]
+pub struct LinkSheetBody {
+    pub account_id: i32,
 }

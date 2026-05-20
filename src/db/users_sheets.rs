@@ -154,10 +154,6 @@ pub async fn update_user_sheet<'e>(
             }
         })?;
 
-    // Handle account linking separately if account_id is provided
-    // Note: This requires a second query. For atomicity, use a transaction in the handler.
-    // For now, we'll just note that account linking should be done separately.
-
     Ok(user_sheet)
 }
 
@@ -233,6 +229,29 @@ pub async fn link_account_to_sheet<'e>(
         eprintln!("Error linking account to sheet: {:?}", err);
         MyError::DBErrors {
             entity: "Failed to link account to sheet",
+        }
+    })?;
+
+    Ok(())
+}
+
+/// Dissociate a user sheet from its account
+pub async fn unlink_account_from_sheet<'e>(
+    executor: impl PgExecutor<'e>,
+    user_sheet_id: i32,
+) -> Result<(), MyError> {
+    let query = sqlx::query(
+        r#"
+        DELETE FROM "accounts_users_sheets"
+        WHERE "user_sheet_id" = $1
+        "#
+    )
+    .bind(user_sheet_id);
+
+    query.execute(executor).await.map_err(|err| {
+        eprintln!("Error unlinking sheet from account: {:?}", err);
+        MyError::DBErrors {
+            entity: "Failed to unlink sheet from account",
         }
     })?;
 
