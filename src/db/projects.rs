@@ -177,11 +177,13 @@ pub async fn get_student_projects<'e>(
 ) -> Result<Vec<Project>, MyError> {
     let query = sqlx::query_as(
         r#"
-        SELECT p.*
+        SELECT DISTINCT p.*
         FROM projects p
         JOIN courses c ON p.course_id = c.id
-        JOIN user_courses uc ON c.id = uc.course_id
-        WHERE uc.user_id = $1
+        LEFT JOIN user_courses uc ON c.id = uc.course_id
+        LEFT JOIN course_classes cc ON c.id = cc.course_id
+        LEFT JOIN user_classes ucls ON cc.class_id = ucls.class_id
+        WHERE uc.user_id = $1 OR ucls.user_id = $1
         ORDER BY p.name ASC
         "#,
     )

@@ -42,10 +42,12 @@ pub async fn get_user_courses<'e>(
 ) -> Result<Vec<crate::models::courses::Course>, MyError> {
     let query = sqlx::query_as(
         r#"
-        SELECT c.*
+        SELECT DISTINCT c.*
         FROM courses c
-        JOIN user_courses uc ON c.id = uc.course_id
-        WHERE uc.user_id = $1
+        LEFT JOIN user_courses uc ON c.id = uc.course_id
+        LEFT JOIN course_classes cc ON c.id = cc.course_id
+        LEFT JOIN user_classes ucls ON cc.class_id = ucls.class_id
+        WHERE uc.user_id = $1 OR ucls.user_id = $1
         ORDER BY c.name
         "#,
     )
@@ -73,8 +75,10 @@ pub async fn get_user_steps<'e>(
         FROM steps s
         JOIN projects p ON s.project_id = p.id
         JOIN courses c ON p.course_id = c.id
-        JOIN user_courses uc ON c.id = uc.course_id
-        WHERE uc.user_id = $1
+        LEFT JOIN user_courses uc ON c.id = uc.course_id
+        LEFT JOIN course_classes cc ON c.id = cc.course_id
+        LEFT JOIN user_classes ucls ON cc.class_id = ucls.class_id
+        WHERE uc.user_id = $1 OR ucls.user_id = $1
         ORDER BY s.name
         "#,
     )
@@ -101,8 +105,10 @@ pub async fn get_user_skills<'e>(
         SELECT DISTINCT sk.*
         FROM skills sk
         JOIN course_skills cs ON sk.id = cs.skill_id
-        JOIN user_courses uc ON cs.course_id = uc.course_id
-        WHERE uc.user_id = $1
+        LEFT JOIN user_courses uc ON cs.course_id = uc.course_id
+        LEFT JOIN course_classes cc ON cs.course_id = cc.course_id
+        LEFT JOIN user_classes ucls ON cc.class_id = ucls.class_id
+        WHERE uc.user_id = $1 OR ucls.user_id = $1
         ORDER BY sk.name
         "#,
     )
