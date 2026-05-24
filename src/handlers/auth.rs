@@ -32,18 +32,9 @@ pub async fn login(
         Err(err) => return Err(err),
     };
     
-    // Check if profile is active (optional, could be done in DB)
-    // if let Some(active) = user_info.user_active && !active { ... } 
-    // user_active was removed from User struct in my previous edit? 
-    // Let's check User struct definition in Step 35/115. 
-    // Yes, I removed 'user_active'. But the DB query still returns it aliased as 'user_active'?
-    // Step 123 replacement query: "us.active AS user_active". 
-    // BUT User struct (Step 115) does NOT have user_active.
-    // This will cause a SQLx error "missing field in struct".
-    // I MUST ADD user_active BACK to User struct or remove it from query.
-    // I should add it back to User struct because it's useful.
-    
-    // Resume handler logic assuming User struct is fixed:
+    if !user_info.user_active {
+        return Err(errors::MyError::Unauthorized);
+    }
     
     let (access_token, refresh_token) =
         match token_manager.generate_token_pair(token_manager.clone(), user_info.clone()) {
@@ -86,6 +77,10 @@ pub async fn refresh_tokens(
             Ok(res) => res,
             Err(err) => return Err(err),
         };
+
+    if !user_info.user_active {
+        return Err(errors::MyError::Unauthorized);
+    }
 
     let user_auth_id: i32 = user_info.account_id;
 
@@ -171,6 +166,10 @@ pub async fn switch_profile(
         req.user_sheet_id,
     )
     .await?;
+
+    if !new_user_info.user_active {
+        return Err(errors::MyError::Unauthorized);
+    }
 
     // 2. Generate new token pair for the new profile
     let (access_token, refresh_token) =

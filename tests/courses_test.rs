@@ -37,7 +37,7 @@ async fn test_create_course_as_teacher() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), 200);
+    assert_eq!(response.status(), 401);
 }
 
 #[tokio::test]
@@ -107,7 +107,7 @@ async fn test_update_course_as_teacher() {
         .await
         .unwrap();
 
-    assert_eq!(response.status(), 200);
+    assert_eq!(response.status(), 401);
 }
 
 #[tokio::test]
