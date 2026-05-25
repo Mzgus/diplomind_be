@@ -1,0 +1,72 @@
+name: Rust CI (Backend Repo)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: diplomind_user
+          POSTGRES_PASSWORD: diplomind_password
+          POSTGRES_DB: diplomind_test
+        ports:
+          - 5432:5432
+        # Health check to ensure Postgres is ready before starting jobs
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://diplomind_user:diplomind_password@localhost:5432/diplomind_test
+      JWT_SECRET: CleSecreteComplexePourLesTokens
+      COOKIE_NAME: auth_cookie_diplomind
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Initialize Database Schema
+        run: |
+          PGPASSWORD=diplomind_password psql -h localhost -U diplomind_user -d diplomind_test -f mig/01.sql
+
+      - name: Seed Database Data
+        run: |
+          PGPASSWORD=diplomind_password psql -h localhost -U diplomind_user -d diplomind_test -f seed/seed.sql
+
+      - name: Build backend
+        run: cargo build
+
+      - name: Start backend server in background
+        run: |
+          cargo run --bin diplomind &
+          # Wait for the backend to start responding
+          for i in {1..30}; do
+            if curl -s http://localhost:3000/ > /dev/null; then
+              echo "Backend is up and running!"
+              exit 0
+            fi
+            echo "Waiting for backend..."
+            sleep 1
+          done
+          echo "Backend failed to start"
+          exit 1
+
+      - name: Run tests
+        run: cargo test -- --test-threads=1
