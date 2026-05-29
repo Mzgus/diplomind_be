@@ -1,4 +1,4 @@
-# Diplomind Backend
+# Diplomind Backend 
 
 Backend REST API for the Diplomind skill management platform. Built with Rust using the Poem framework.
 
