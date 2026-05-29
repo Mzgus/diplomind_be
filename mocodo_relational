@@ -1,7 +1,9 @@
 %%mocodo
 
 :
-REFRESH_TOKENS: token, date_expiration, _#id_compte > COMPTE > id
+:
+:
+IDENTIFIANT: id, email, mdp, _#id_compte > COMPTE > id
 :
 :
 :
@@ -12,6 +14,8 @@ COMPETENCE: id, nom, description
 ETAPE_COMPETENCE: #id_etape > ETAPE > id, _#id_competence > COMPETENCE > id
 :
 
+:
+IDENTIFIANT_OAUTH: id, fournisseur, oauth_id, #id_compte > COMPTE > id
 :
 COMPTE: id, email,
 :
@@ -25,7 +29,9 @@ ETAPE: id, nom, description, #id_projet > PROJET > id
 :
 
 :
-IDENTIFIANT: id, email, mdp, _#id_compte > COMPTE > id
+:
+:
+REFRESH_TOKENS: token, date_expiration, _#id_compte > COMPTE > id
 :
 CLASSE_UTILISATEUR: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_classe > CLASSE > id
 :
@@ -36,6 +42,8 @@ COURS: id, nom, description
 PROJET: id, nom, description, #id_cours > COURS > id
 :
 
+:
+:
 :
 :
 :
