@@ -1,7 +1,7 @@
 use crate::{
     db,
     errors::MyError,
-    middleware::{self, jwt_auth::AuthUser},
+    middleware::jwt_auth::AuthUser,
     models::projects::*,
 };
 use poem::web::{Data, Json, Path};
