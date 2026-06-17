@@ -14,8 +14,19 @@ pub async fn create_step(
     Json(data): Json<CreateStep>,
     auth_user: AuthUser,
 ) -> Result<Json<Step>, MyError> {
-    if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
+    let role = &auth_user.0.user_role;
+    let user_id = auth_user.0.user_id;
+
+    if role != "admin" && role != "teacher" {
         return Err(MyError::Unauthorized);
+    }
+
+    if role == "teacher" {
+        let project = db::projects::get_project_by_id(pool, data.project_id).await?;
+        let is_assigned = db::user_courses::check_user_course(pool, user_id, project.course_id).await?;
+        if !is_assigned {
+            return Err(MyError::Unauthorized);
+        }
     }
 
     let step = db::steps::create_step(pool, data).await?;
@@ -62,22 +73,60 @@ pub async fn update_step(
     Json(data): Json<UpdateStep>,
     auth_user: AuthUser,
 ) -> Result<Json<Step>, MyError> {
-    if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
+    let role = &auth_user.0.user_role;
+    let user_id = auth_user.0.user_id;
+
+    if role != "admin" && role != "teacher" {
         return Err(MyError::Unauthorized);
+    }
+
+    let step = db::steps::get_step_by_id(pool, id).await?;
+    let project = db::projects::get_project_by_id(pool, step.project_id).await?;
+
+    if role == "teacher" {
+        let is_assigned = db::user_courses::check_user_course(pool, user_id, project.course_id).await?;
+        if !is_assigned {
+            return Err(MyError::Unauthorized);
+        }
+
+        if let Some(new_project_id) = data.project_id {
+            if new_project_id != step.project_id {
+                let new_project = db::projects::get_project_by_id(pool, new_project_id).await?;
+                let is_assigned_new = db::user_courses::check_user_course(pool, user_id, new_project.course_id).await?;
+                if !is_assigned_new {
+                    return Err(MyError::Unauthorized);
+                }
+            }
+        }
     }
 
     let step = db::steps::update_step(pool, id, data).await?;
     Ok(Json(step))
 }
 
-/// Delete a step (admin only)
+/// Delete a step (admin/teacher only)
 #[poem::handler]
 pub async fn delete_step(
     Data(pool): Data<&Pool<Postgres>>,
     Path(id): Path<i32>,
     auth_user: AuthUser,
 ) -> Result<Json<Step>, MyError> {
-    middleware::rbac::require_admin(&auth_user.0)?;
+    let role = &auth_user.0.user_role;
+    let user_id = auth_user.0.user_id;
+
+    if role != "admin" && role != "teacher" {
+        return Err(MyError::Unauthorized);
+    }
+
+    let step = db::steps::get_step_by_id(pool, id).await?;
+    let project = db::projects::get_project_by_id(pool, step.project_id).await?;
+
+    if role == "teacher" {
+        let is_assigned = db::user_courses::check_user_course(pool, user_id, project.course_id).await?;
+        if !is_assigned {
+            return Err(MyError::Unauthorized);
+        }
+    }
 
     let step = db::steps::delete_step(pool, id).await?;
     Ok(Json(step))

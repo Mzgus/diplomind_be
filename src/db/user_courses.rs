@@ -174,3 +174,30 @@ pub async fn remove_user_from_course<'e>(
 
     Ok(user_course)
 }
+
+/// Check if a user-course association exists
+pub async fn check_user_course<'e>(
+    executor: impl PgExecutor<'e>,
+    user_id: i32,
+    course_id: i32,
+) -> Result<bool, MyError> {
+    let query = sqlx::query_as::<_, UserCourse>(
+        r#"
+        SELECT * FROM "user_courses"
+        WHERE "user_id" = $1 AND "course_id" = $2
+        "#,
+    )
+    .bind(user_id)
+    .bind(course_id);
+
+    match query.fetch_one(executor).await {
+        Ok(_) => Ok(true),
+        Err(sqlx::Error::RowNotFound) => Ok(false),
+        Err(err) => {
+            eprintln!("Error checking user course: {:?}", err);
+            Err(MyError::DBErrors {
+                entity: "Failed to check user course",
+            })
+        }
+    }
+}

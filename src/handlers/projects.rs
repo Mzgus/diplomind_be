@@ -14,8 +14,18 @@ pub async fn create_project(
     Json(data): Json<CreateProject>,
     auth_user: AuthUser,
 ) -> Result<Json<Project>, MyError> {
-    if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
+    let role = &auth_user.0.user_role;
+    let user_id = auth_user.0.user_id;
+
+    if role != "admin" && role != "teacher" {
         return Err(MyError::Unauthorized);
+    }
+
+    if role == "teacher" {
+        let is_assigned = db::user_courses::check_user_course(pool, user_id, data.course_id).await?;
+        if !is_assigned {
+            return Err(MyError::Unauthorized);
+        }
     }
 
     let project = db::projects::create_project(pool, data).await?;
@@ -62,22 +72,57 @@ pub async fn update_project(
     Json(data): Json<UpdateProject>,
     auth_user: AuthUser,
 ) -> Result<Json<Project>, MyError> {
-    if auth_user.0.user_role != "admin" && auth_user.0.user_role != "teacher" {
+    let role = &auth_user.0.user_role;
+    let user_id = auth_user.0.user_id;
+
+    if role != "admin" && role != "teacher" {
         return Err(MyError::Unauthorized);
+    }
+
+    let project = db::projects::get_project_by_id(pool, id).await?;
+
+    if role == "teacher" {
+        let is_assigned = db::user_courses::check_user_course(pool, user_id, project.course_id).await?;
+        if !is_assigned {
+            return Err(MyError::Unauthorized);
+        }
+
+        if let Some(new_course_id) = data.course_id {
+            if new_course_id != project.course_id {
+                let is_assigned_new = db::user_courses::check_user_course(pool, user_id, new_course_id).await?;
+                if !is_assigned_new {
+                    return Err(MyError::Unauthorized);
+                }
+            }
+        }
     }
 
     let project = db::projects::update_project(pool, id, data).await?;
     Ok(Json(project))
 }
 
-/// Delete a project (admin only)
+/// Delete a project (admin/teacher only)
 #[poem::handler]
 pub async fn delete_project(
     Data(pool): Data<&Pool<Postgres>>,
     Path(id): Path<i32>,
     auth_user: AuthUser,
 ) -> Result<Json<Project>, MyError> {
-    middleware::rbac::require_admin(&auth_user.0)?;
+    let role = &auth_user.0.user_role;
+    let user_id = auth_user.0.user_id;
+
+    if role != "admin" && role != "teacher" {
+        return Err(MyError::Unauthorized);
+    }
+
+    let project = db::projects::get_project_by_id(pool, id).await?;
+
+    if role == "teacher" {
+        let is_assigned = db::user_courses::check_user_course(pool, user_id, project.course_id).await?;
+        if !is_assigned {
+            return Err(MyError::Unauthorized);
+        }
+    }
 
     let project = db::projects::delete_project(pool, id).await?;
     Ok(Json(project))

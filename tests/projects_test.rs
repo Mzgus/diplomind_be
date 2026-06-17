@@ -183,3 +183,67 @@ async fn test_get_student_projects() {
     let projects = body.as_array().unwrap();
     assert!(!projects.is_empty());
 }
+
+#[tokio::test]
+async fn test_delete_project_as_assigned_teacher_success() {
+    let (admin_token, _) = get_admin_and_student_tokens().await;
+    let teacher_token = get_teacher_token().await;
+    let client = reqwest::Client::new();
+
+    // First create a project under course 1 (which teacher Marie Dubois teaches)
+    let create_response = client
+        .post("http://localhost:3000/projects")
+        .header("Authorization", format!("Bearer {}", admin_token))
+        .json(&serde_json::json!({
+            "name": "Teacher Owned Project",
+            "course_id": 1
+        }))
+        .send()
+        .await
+        .unwrap();
+
+    let created: serde_json::Value = create_response.json().await.unwrap();
+    let project_id = created["id"].as_i64().unwrap();
+
+    // Now delete it as teacher (Marie Dubois teaches course 1)
+    let response = client
+        .delete(format!("http://localhost:3000/projects/{}", project_id))
+        .header("Authorization", format!("Bearer {}", teacher_token))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), 200);
+}
+
+#[tokio::test]
+async fn test_delete_project_as_unassigned_teacher_fails() {
+    let (admin_token, _) = get_admin_and_student_tokens().await;
+    let teacher_token = get_teacher_token().await;
+    let client = reqwest::Client::new();
+
+    // Create a project under course 5 (DevOps - Marie Dubois does NOT teach course 5, Claire/Alex do)
+    let create_response = client
+        .post("http://localhost:3000/projects")
+        .header("Authorization", format!("Bearer {}", admin_token))
+        .json(&serde_json::json!({
+            "name": "Teacher Unowned Project",
+            "course_id": 5
+        }))
+        .send()
+        .await
+        .unwrap();
+
+    let created: serde_json::Value = create_response.json().await.unwrap();
+    let project_id = created["id"].as_i64().unwrap();
+
+    // Try to delete it as teacher (Marie Dubois should fail)
+    let response = client
+        .delete(format!("http://localhost:3000/projects/{}", project_id))
+        .header("Authorization", format!("Bearer {}", teacher_token))
+        .send()
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), 401); // Unauthorized
+}
