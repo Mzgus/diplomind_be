@@ -6,6 +6,7 @@ use diplomind::services::TokenManager;
 
 #[tokio::test]
 async fn test_expired_token_rejected() {
+    dotenv::dotenv().ok();
     let secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
     let token_manager = TokenManager::new(secret, "auth_cookie_diplomind".to_string());
 
