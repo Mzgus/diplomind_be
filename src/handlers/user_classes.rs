@@ -25,9 +25,9 @@ pub async fn get_user_classes(
     Data(pool): Data<&Pool<Postgres>>,
     Path(user_id): Path<i32>,
     _auth_user: AuthUser,
-) -> Result<Json<Vec<UserClass>>, MyError> {
-    let user_classes = db::user_classes::get_user_classes(pool, user_id).await?;
-    Ok(Json(user_classes))
+) -> Result<Json<Vec<crate::models::classes::Class>>, MyError> {
+    let classes = db::user_classes::get_user_classes(pool, user_id).await?;
+    Ok(Json(classes))
 }
 
 /// Get all users in a class
@@ -36,9 +36,9 @@ pub async fn get_class_users(
     Data(pool): Data<&Pool<Postgres>>,
     Path(class_id): Path<i32>,
     _auth_user: AuthUser,
-) -> Result<Json<Vec<UserClass>>, MyError> {
-    let class_users = db::user_classes::get_class_users(pool, class_id).await?;
-    Ok(Json(class_users))
+) -> Result<Json<Vec<crate::models::users_sheets::UserSheet>>, MyError> {
+    let users = db::user_classes::get_class_users(pool, class_id).await?;
+    Ok(Json(users))
 }
 
 /// Remove a user from a class (admin only)

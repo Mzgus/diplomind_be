@@ -12,14 +12,14 @@ fn test_generate_access_token_creates_valid_jwt() {
     );
 
     let user = User {
+        account_id: 1,
         user_id: 1,
         user_lastname: "Test".to_string(),
         user_firstname: "User".to_string(),
         user_role: "admin".to_string(),
-        user_profilepicture: "https://example.com/pic.jpg".to_string(),
+        user_profilepicture: Some("https://example.com/pic.jpg".to_string()),
         user_email: "test@example.com".to_string(),
-        user_pwd: "hashed_password".to_string(),
-        user_active: Some(true),
+        user_active: true,
     };
 
     let claims = JWTClaims {
@@ -87,14 +87,14 @@ fn test_access_token_contains_claims() {
     );
 
     let user = User {
+        account_id: 42,
         user_id: 42,
         user_lastname: "Doe".to_string(),
         user_firstname: "John".to_string(),
         user_role: "student".to_string(),
-        user_profilepicture: "https://example.com/pic.jpg".to_string(),
+        user_profilepicture: Some("https://example.com/pic.jpg".to_string()),
         user_email: "john.doe@example.com".to_string(),
-        user_pwd: "hashed".to_string(),
-        user_active: Some(true),
+        user_active: true,
     };
 
     let claims = JWTClaims {

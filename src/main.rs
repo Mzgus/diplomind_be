@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 #[tokio::main]
 pub async fn main() -> Result<(), std::io::Error> {
-    dotenv().unwrap();
+    dotenv().ok();
     let db_url = match std::env::var("DATABASE_URL") {
         Ok(res) => res,
         Err(_) => {
@@ -61,6 +61,14 @@ pub async fn main() -> Result<(), std::io::Error> {
                     "/verify_token",
                     get(handlers::auth::verify_token).with(JwtAuth::new(token_manager.clone())),
                 )
+                .at(
+                    "/me/profiles",
+                    get(handlers::auth::get_my_profiles).with(JwtAuth::new(token_manager.clone())),
+                )
+                .at(
+                    "/auth/switch-profile",
+                    post(handlers::auth::switch_profile).with(JwtAuth::new(token_manager.clone())),
+                )
                 // users routes (complete user information with JOIN)
                 .at(
                     "/users",
@@ -83,10 +91,22 @@ pub async fn main() -> Result<(), std::io::Error> {
                         .with(JwtAuth::new(token_manager.clone())),
                 )
                 .at(
+                    "/users_sheets/:id/account",
+                    post(handlers::users_sheets::link_sheet_to_account)
+                        .delete(handlers::users_sheets::unlink_account_from_sheet)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
+                .at(
                     "/users_sheets/:id",
                     get(handlers::users_sheets::get_user_sheet)
                         .put(handlers::users_sheets::update_user_sheet)
                         .delete(handlers::users_sheets::delete_user_sheet)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
+                // accounts routes
+                .at(
+                    "/accounts",
+                    post(handlers::accounts::create_account)
                         .with(JwtAuth::new(token_manager.clone())),
                 )
                 // users_auth CRUD routes
@@ -248,6 +268,16 @@ pub async fn main() -> Result<(), std::io::Error> {
                 .at(
                     "/users/:id/courses",
                     get(handlers::user_courses::get_user_courses)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
+                .at(
+                    "/users/:id/steps",
+                    get(handlers::user_courses::get_user_steps)
+                        .with(JwtAuth::new(token_manager.clone())),
+                )
+                .at(
+                    "/users/:id/skills",
+                    get(handlers::user_courses::get_user_skills)
                         .with(JwtAuth::new(token_manager.clone())),
                 )
                 .at(

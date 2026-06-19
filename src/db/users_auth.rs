@@ -8,14 +8,14 @@ pub async fn create_user_auth<'e>(
 ) -> Result<UserAuthRecord, MyError> {
     let query = sqlx::query_as(
         r#"
-        INSERT INTO "users_auth" ("email", "pwd", "id_user_sheet")
+        INSERT INTO "users_auth" ("email", "pwd", "account_id")
         VALUES ($1, $2, $3)
         RETURNING *
         "#,
     )
     .bind(&data.email)
     .bind(&data.pwd)
-    .bind(data.id_user_sheet);
+    .bind(data.account_id);
 
     let user_auth: UserAuthRecord = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error creating user auth: {:?}", err);

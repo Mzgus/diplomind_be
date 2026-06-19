@@ -33,14 +33,14 @@ pub async fn create_refresh_token<'e>(
 ) -> Result<RefreshToken, MyError> {
     let mut query = sqlx::query_as(
         r#"
-        INSERT INTO "refresh_tokens" ("token", "id_user_auth", "expiration_date")
+        INSERT INTO "refresh_tokens" ("token", "account_id", "expiration_date")
         VALUES ($1, $2, $3)
         RETURNING *
     "#,
     );
     query = query
         .bind(&refresh_token)
-        .bind(user_auth_id)
+        .bind(user_auth_id) // This variable name might be confusing now, but it holds account_id
         .bind(expiration_date);
     let refresh_token: RefreshToken = match query.fetch_one(executor).await {
         Ok(res) => res,
@@ -79,18 +79,18 @@ pub async fn delete_refresh_token<'e>(
     Ok(refresh_token)
 }
 
-pub async fn delete_refresh_token_by_auth_id<'e>(
+pub async fn delete_refresh_token_by_account_id<'e>(
     executor: impl sqlx::PgExecutor<'e>,
-    user_auth_id: i32,
+    account_id: i32,
 ) -> Result<RefreshToken, MyError> {
     let mut query = sqlx::query_as(
         r#"
         DELETE FROM "refresh_tokens" 
-        WHERE "id_user_auth" = ($1) 
+        WHERE "account_id" = ($1) 
         RETURNING *
     "#,
     );
-    query = query.bind(user_auth_id);
+    query = query.bind(account_id);
     let refresh_token: RefreshToken = match query.fetch_one(executor).await {
         Ok(res) => res,
         Err(_err) => {
@@ -102,26 +102,24 @@ pub async fn delete_refresh_token_by_auth_id<'e>(
     Ok(refresh_token)
 }
 
-/// Revoke all refresh tokens for a specific user (admin function)
-pub async fn revoke_user_refresh_tokens<'e>(
+/// Revoke all refresh tokens for a specific account (was user_id/sheet link)
+pub async fn revoke_account_refresh_tokens<'e>(
     executor: impl sqlx::PgExecutor<'e>,
-    user_id: i32,
+    account_id: i32,
 ) -> Result<u64, MyError> {
     let result = sqlx::query(
         r#"
         DELETE FROM "refresh_tokens"
-        WHERE "id_user_auth" IN (
-            SELECT id FROM "users_auth" WHERE "id_user_sheet" = $1
-        )
+        WHERE "account_id" = $1
         "#,
     )
-    .bind(user_id)
+    .bind(account_id)
     .execute(executor)
     .await
     .map_err(|err| {
-        eprintln!("Error revoking user refresh tokens: {:?}", err);
+        eprintln!("Error revoking account refresh tokens: {:?}", err);
         MyError::DBErrors {
-            entity: "Failed to revoke user refresh tokens",
+            entity: "Failed to revoke account refresh tokens",
         }
     })?;
 
@@ -155,11 +153,21 @@ pub async fn login<'e>(
 ) -> Result<User, MyError> {
     let mut query = sqlx::query_as(
         r#"
-        SELECT us.id AS user_id, us.last_name AS user_lastname, us.first_name AS user_firstname, us.type_user AS user_role, us.profile_picture AS user_profilepicture, us.active AS user_active, ua.email AS user_email, ua.pwd AS user_pwd
-        FROM "users_sheets" as us 
-        JOIN "users_auth" as ua
-        ON us.id = ua.id_user_sheet
+        SELECT 
+            a.id AS account_id,
+            us.id AS user_id,
+            us.last_name AS user_lastname,
+            us.first_name AS user_firstname,
+            us.type_user AS user_role,
+            us.profile_picture AS user_profilepicture,
+            a.email AS user_email,
+            us.active AS user_active
+        FROM "users_auth" ua
+        JOIN "accounts" a ON ua.account_id = a.id
+        JOIN "accounts_users_sheets" aus ON aus.account_id = a.id
+        JOIN "users_sheets" us ON us.id = aus.user_sheet_id
         WHERE ua.email = ($1)
+        LIMIT 1
         "#,
     );
     query = query.bind(user_email);
@@ -180,11 +188,21 @@ pub async fn get_user_info_by_token<'e>(
 ) -> Result<User, MyError> {
     let mut query = sqlx::query_as(
         r#"
-        SELECT us.id AS user_id, us.last_name AS user_lastname, us.first_name AS user_firstname, us.type_user AS user_role, us.profile_picture AS user_profilepicture, us.active AS user_active, ua.email AS user_email, ua.pwd AS user_pwd
-        FROM "users_sheets" as us
-        JOIN "users_auth" as ua ON us.id = ua.id_user_sheet
-        JOIN "refresh_tokens" as rt ON ua.id = rt.id_user_auth
+        SELECT 
+            a.id AS account_id,
+            us.id AS user_id,
+            us.last_name AS user_lastname,
+            us.first_name AS user_firstname,
+            us.type_user AS user_role,
+            us.profile_picture AS user_profilepicture,
+            a.email AS user_email,
+            us.active AS user_active
+        FROM "refresh_tokens" rt
+        JOIN "accounts" a ON rt.account_id = a.id
+        JOIN "accounts_users_sheets" aus ON aus.account_id = a.id
+        JOIN "users_sheets" us ON us.id = aus.user_sheet_id
         WHERE rt.token = ($1)
+        LIMIT 1
         "#,
     );
     query = query.bind(refresh_token);
@@ -205,7 +223,7 @@ pub async fn get_auth_id_by_email<'e>(
 ) -> Result<i32, MyError> {
     let mut query = sqlx::query(
         r#"
-        SELECT ua.id from "users_auth" as ua
+        SELECT ua.account_id as id from "users_auth" as ua
         WHERE ua.email = ($1)
         "#,
     );
@@ -219,4 +237,89 @@ pub async fn get_auth_id_by_email<'e>(
         }
     };
     Ok(user_auth_id)
+}
+
+pub async fn get_credentials_by_email<'e>(
+    executor: impl sqlx::PgExecutor<'e>,
+    email: &str,
+) -> Result<crate::models::users_auth::UserAuthRecord, MyError> {
+    let mut query = sqlx::query_as(
+        r#"
+        SELECT * FROM "users_auth"
+        WHERE email = ($1)
+        "#,
+    );
+    query = query.bind(email);
+    let record: crate::models::users_auth::UserAuthRecord = match query.fetch_one(executor).await {
+        Ok(res) => res,
+        Err(_) => {
+            return Err(MyError::DBErrors {
+                entity: "User auth not found",
+            });
+        }
+    };
+    Ok(record)
+}
+
+/// Get all profiles (user sheets) for a specific account
+pub async fn get_account_profiles<'e>(
+    executor: impl sqlx::PgExecutor<'e>,
+    account_id: i32,
+) -> Result<Vec<UserSheet>, MyError> {
+    let query = sqlx::query_as(
+        r#"
+        SELECT us.*
+        FROM "users_sheets" us
+        JOIN "accounts_users_sheets" aus ON us.id = aus.user_sheet_id
+        WHERE aus.account_id = $1
+        ORDER BY us.type_user, us.last_name
+        "#,
+    )
+    .bind(account_id);
+
+    let profiles: Vec<UserSheet> = query.fetch_all(executor).await.map_err(|err| {
+        eprintln!("Error fetching account profiles: {:?}", err);
+        MyError::DBErrors {
+            entity: "Failed to fetch account profiles",
+        }
+    })?;
+
+    Ok(profiles)
+}
+
+/// Get a specific user profile (sheet) ensuring it belongs to the given account
+pub async fn get_user_info_by_profile<'e>(
+    executor: impl sqlx::PgExecutor<'e>,
+    account_id: i32,
+    user_sheet_id: i32,
+) -> Result<User, MyError> {
+    let mut query = sqlx::query_as(
+        r#"
+        SELECT 
+            a.id AS account_id,
+            us.id AS user_id,
+            us.last_name AS user_lastname,
+            us.first_name AS user_firstname,
+            us.type_user AS user_role,
+            us.profile_picture AS user_profilepicture,
+            a.email AS user_email,
+            us.active AS user_active
+        FROM "users_sheets" us
+        JOIN "accounts_users_sheets" aus ON aus.user_sheet_id = us.id
+        JOIN "accounts" a ON a.id = aus.account_id
+        WHERE a.id = $1 AND us.id = $2
+        LIMIT 1
+        "#,
+    );
+    query = query.bind(account_id).bind(user_sheet_id);
+
+    let user_info: User = match query.fetch_one(executor).await {
+        Ok(res) => res,
+        Err(_) => {
+            return Err(MyError::NotFound {
+                entity: "Profile not found for this account",
+            });
+        }
+    };
+    Ok(user_info)
 }

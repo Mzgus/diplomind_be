@@ -114,7 +114,7 @@ impl TokenManager {
         // In development (HTTP), secure must be false. In production (HTTPS), it should be true.
         // For now, we'll set it to false to work with HTTP in development
         cookie.set_secure(false);
-        cookie.set_same_site(poem::web::cookie::SameSite::Lax);
+        cookie.set_same_site(poem::web::cookie::SameSite::Strict);
 
         cookie.set_expires(expiration_date);
 

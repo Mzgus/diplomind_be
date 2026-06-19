@@ -1,10 +1,21 @@
 -- Seed Data for Diplomind Database
 -- This file populates the database with realistic test data
--- Run this AFTER running 01.sql migration
+-- Run this AFTER running 01.sql and 02.sql migrations
+
+-- Clear existing data (order matters for FKs)
+TRUNCATE TABLE accounts_users_sheets CASCADE;
+TRUNCATE TABLE accounts CASCADE;
+-- Other tables are truncated by 01.sql DROP/CREATE usually, but if this is just seed:
+-- TRUNCATE TABLE users_auth CASCADE; -- users_auth now depends on accounts
+-- TRUNCATE TABLE users_sheets CASCADE;
+
+-- Note: In a real seed overwrite specific to this migration structure, we assume tables are empty or we append.
+-- Ensuring clean state for seed:
+TRUNCATE skill_validations, step_skills, user_classes, user_courses, course_classes, course_skills, steps, projects, courses, skills, classes, refresh_tokens, accounts_users_sheets, users_auth, accounts, users_sheets RESTART IDENTITY CASCADE;
 
 
 -- ============================================
--- 1. Users (Students, Teachers, Admins)
+-- 1. Users Sheets (Profiles)
 -- ============================================
 
 -- Admin users (id 1, 2)
@@ -29,22 +40,44 @@ INSERT INTO users_sheets (id, last_name, first_name, type_user, profile_picture,
 (12, 'David', 'Manon', 'student', 'https://i.pravatar.cc/150?img=16', TRUE),
 (13, 'Bertrand', 'Tom', 'student', 'https://i.pravatar.cc/150?img=17', TRUE),
 (14, 'Roux', 'Sarah', 'student', 'https://i.pravatar.cc/150?img=18', TRUE),
-(15, 'Vincent', 'Arthur', 'student', 'https://i.pravatar.cc/150?img=19', TRUE);
+(15, 'Vincent', 'Arthur', 'student', 'https://i.pravatar.cc/150?img=19', TRUE),
 
--- Authentication for all users (password: "Password123" hashed with Argon2)
--- Admin
-INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES
+-- Double Identity User (id 16, 17)
+(16, 'Polyvalent', 'Alex', 'teacher', 'https://i.pravatar.cc/150?img=20', TRUE),
+(17, 'Polyvalent', 'Alex', 'student', 'https://i.pravatar.cc/150?img=21', TRUE);
+
+
+-- ============================================
+-- 2. Accounts & Auth
+-- ============================================
+
+-- Accounts (Identities)
+INSERT INTO accounts (id, email) VALUES
+(1, 'sophie.martin@diplomind.fr'),
+(2, 'lucas.bernard@diplomind.fr'),
+(3, 'marie.dubois@diplomind.fr'),
+(4, 'jean.petit@diplomind.fr'),
+(5, 'claire.robert@diplomind.fr'),
+(6, 'emma.moreau@student.diplomind.fr'),
+(7, 'louis.simon@student.diplomind.fr'),
+(8, 'chloe.laurent@student.diplomind.fr'),
+(9, 'hugo.lefebvre@student.diplomind.fr'),
+(10, 'lea.michel@student.diplomind.fr'),
+(11, 'nathan.garcia@student.diplomind.fr'),
+(12, 'manon.david@student.diplomind.fr'),
+(13, 'tom.bertrand@student.diplomind.fr'),
+(14, 'sarah.roux@student.diplomind.fr'),
+(15, 'arthur.vincent@student.diplomind.fr'),
+(16, 'alex.poly@diplomind.fr');
+
+-- Users Auth (Credentials) - Linked to Accounts
+-- Password: "Password123" hashed with Argon2
+INSERT INTO users_auth (email, pwd, account_id) VALUES
 ('sophie.martin@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 1),
-('lucas.bernard@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 2);
-
--- Teachers (id 3, 4, 5)
-INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES
+('lucas.bernard@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 2),
 ('marie.dubois@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 3),
 ('jean.petit@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 4),
-('claire.robert@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 5);
-
--- Students (id 6-15)
-INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES
+('claire.robert@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 5),
 ('emma.moreau@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 6),
 ('louis.simon@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 7),
 ('chloe.laurent@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 8),
@@ -54,10 +87,20 @@ INSERT INTO users_auth (email, pwd, id_user_sheet) VALUES
 ('manon.david@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 12),
 ('tom.bertrand@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 13),
 ('sarah.roux@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 14),
-('arthur.vincent@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 15);
+('arthur.vincent@student.diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 15),
+('alex.poly@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 16);
+
+-- Link Accounts to User Sheets (1-to-1 default for now)
+INSERT INTO accounts_users_sheets (account_id, user_sheet_id) VALUES
+(1, 1), (2, 2), (3, 3), (4, 4), (5, 5),
+(6, 6), (7, 7), (8, 8), (9, 9), (10, 10),
+(11, 11), (12, 12), (13, 13), (14, 14), (15, 15),
+-- Multi-Account Link: Alex Poly has 2 profiles (16: Teacher, 17: Student)
+(16, 16), (16, 17);
+
 
 -- ============================================
--- 2. Classes
+-- 3. Classes
 -- ============================================
 
 INSERT INTO classes (name) VALUES
@@ -67,7 +110,7 @@ INSERT INTO classes (name) VALUES
 ('Data Science & IA');
 
 -- ============================================
--- 3. Courses
+-- 4. Courses
 -- ============================================
 
 INSERT INTO courses (name, description) VALUES
@@ -79,7 +122,7 @@ INSERT INTO courses (name, description) VALUES
 ('Sécurité des Applications Web', 'OWASP, authentification, autorisation et bonnes pratiques');
 
 -- ============================================
--- 4. Skills (Compétences)
+-- 5. Skills (Compétences)
 -- ============================================
 
 INSERT INTO skills (name, description) VALUES
@@ -107,7 +150,7 @@ INSERT INTO skills (name, description) VALUES
 ('Technical Documentation', 'Rédaction de documentation technique claire');
 
 -- ============================================
--- 5. Projects
+-- 6. Projects
 -- ============================================
 
 INSERT INTO projects (name, description, course_id) VALUES
@@ -118,7 +161,7 @@ INSERT INTO projects (name, description, course_id) VALUES
 ('Pipeline CI/CD', 'Mise en place de l''automatisation des tests et déploiements', 5);
 
 -- ============================================
--- 6. Steps (Étapes de projet)
+-- 7. Steps (Étapes de projet)
 -- ============================================
 
 -- Projet 1: API Diplomind
@@ -145,7 +188,7 @@ INSERT INTO steps (name, description, project_id, step_order) VALUES
 ('Notifications', 'Système de notifications pour les étudiants', 3, 3);
 
 -- ============================================
--- 7. Link Skills to Steps
+-- 8. Link Skills to Steps
 -- ============================================
 
 -- Projet 1: API Diplomind
@@ -166,7 +209,7 @@ INSERT INTO step_skills (step_id, skill_id) VALUES
 (11, 6), (11, 8); -- Responsive: React + Responsive Design
 
 -- ============================================
--- 8. Link Courses to Classes
+-- 9. Link Courses to Classes
 -- ============================================
 
 INSERT INTO course_classes (course_id, class_id) VALUES
@@ -179,7 +222,7 @@ INSERT INTO course_classes (course_id, class_id) VALUES
 (6, 1), (6, 2); -- Sécurité → CDA + Web Full Stack
 
 -- ============================================
--- 9. Link Skills to Courses
+-- 10. Link Skills to Courses
 -- ============================================
 
 INSERT INTO course_skills (course_id, skill_id) VALUES
@@ -197,7 +240,7 @@ INSERT INTO course_skills (course_id, skill_id) VALUES
 (6, 4), (6, 5);
 
 -- ============================================
--- 10. Assign Students to Classes
+-- 11. Assign Students to Classes
 -- ============================================
 
 -- CDA 2024-2025 (tous les étudiants)
@@ -207,35 +250,56 @@ INSERT INTO user_classes (user_id, class_id) VALUES
 
 -- Web Full Stack (quelques étudiants)
 INSERT INTO user_classes (user_id, class_id) VALUES
-(7, 2), (9, 2), (11, 2), (13, 2);
+(6, 2), (7, 2), (9, 2), (11, 2), (13, 2);
 
 -- ============================================
--- 11. Assign Students to Courses
+-- 12. Assign Teachers to Courses
 -- ============================================
+-- Note: users_sheets IDs for teachers: 3=Marie, 4=Jean, 5=Claire, 16=Alex
 
--- Backend Development
+-- Backend Development (course 1)
 INSERT INTO user_courses (user_id, course_id) VALUES
-(7, 1), (8, 1), (9, 1), (10, 1), (11, 1), (12, 1);
+(3, 1), (4, 1);
 
--- Frontend React
+-- Frontend React (course 2)
 INSERT INTO user_courses (user_id, course_id) VALUES
-(7, 2), (9, 2), (11, 2), (13, 2), (15, 2);
+(4, 2), (5, 2);
 
--- PostgreSQL
+-- PostgreSQL (course 3)
 INSERT INTO user_courses (user_id, course_id) VALUES
-(7, 3), (8, 3), (10, 3), (12, 3), (14, 3);
+(3, 3), (5, 3);
+
+-- Architecture Microservices (course 4)
+INSERT INTO user_courses (user_id, course_id) VALUES
+(4, 4), (16, 4);
+
+-- DevOps & CI/CD (course 5)
+INSERT INTO user_courses (user_id, course_id) VALUES
+(5, 5), (16, 5);
+
+-- Sécurité des Applications Web (course 6)
+INSERT INTO user_courses (user_id, course_id) VALUES
+(3, 6), (16, 6);
 
 -- ============================================
--- 12. Skill Validations (quelques exemples)
+-- 13. Skill Validations
 -- ============================================
 
--- Emma (user 7) - Étudiante avancée
+-- Emma (user sheet_id=6) - Étudiante avancée
 INSERT INTO skill_validations (user_id, skill_id, status, validated_at, validated_by) VALUES
-(7, 1, 'validated', NOW() - INTERVAL '10 days', 4), -- Rust validé par Marie
-(7, 2, 'validated', NOW() - INTERVAL '8 days', 4),  -- API Design validé
-(7, 3, 'validated', NOW() - INTERVAL '5 days', 5),  -- PostgreSQL validé par Jean
-(7, 6, 'pending', NULL, NULL),                       -- React en attente
-(7, 13, 'validated', NOW() - INTERVAL '15 days', 4); -- Git validé
+(6, 1, 'validated', NOW() - INTERVAL '10 days', 4), -- Rust validé par Marie
+(6, 2, 'validated', NOW() - INTERVAL '8 days', 4),  -- API Design validé
+(6, 3, 'validated', NOW() - INTERVAL '5 days', 5),  -- PostgreSQL validé par Jean
+(6, 6, 'pending', NULL, NULL),                       -- React en attente
+(6, 13, 'validated', NOW() - INTERVAL '15 days', 4); -- Git validé
+
+-- Louis (user sheet_id=7) - Étudiant avancé
+INSERT INTO skill_validations (user_id, skill_id, status, validated_at, validated_by) VALUES
+(7, 1, 'validated', NOW() - INTERVAL '10 days', 4),
+(7, 2, 'validated', NOW() - INTERVAL '8 days', 4),
+(7, 3, 'validated', NOW() - INTERVAL '5 days', 5),
+(7, 6, 'pending', NULL, NULL),
+(7, 13, 'validated', NOW() - INTERVAL '15 days', 4);
 
 -- Louis (user 8) - Étudiant moyen
 INSERT INTO skill_validations (user_id, skill_id, status, validated_at, validated_by) VALUES
@@ -255,13 +319,11 @@ INSERT INTO skill_validations (user_id, skill_id, status, validated_at, validate
 (10, 5, 'rejected', NOW() - INTERVAL '1 day', 4); -- Error Handling rejeté
 
 -- ============================================
--- 13. Reset Sequences (important!)
+-- 14. Reset Sequences
 -- ============================================
 
--- Ajuster les séquences pour éviter les conflits d'ID
--- Le troisième paramètre 'true' indique que la valeur a déjà été utilisée
--- COALESCE garantit qu'on a toujours une valeur même si la table est vide
 SELECT setval('users_sheets_id_seq', COALESCE((SELECT MAX(id) FROM users_sheets), 1), true);
+SELECT setval('accounts_id_seq', COALESCE((SELECT MAX(id) FROM accounts), 1), true);
 SELECT setval('users_auth_id_seq', COALESCE((SELECT MAX(id) FROM users_auth), 1), true);
 SELECT setval('classes_id_seq', COALESCE((SELECT MAX(id) FROM classes), 1), true);
 SELECT setval('courses_id_seq', COALESCE((SELECT MAX(id) FROM courses), 1), true);
@@ -269,14 +331,4 @@ SELECT setval('skills_id_seq', COALESCE((SELECT MAX(id) FROM skills), 1), true);
 SELECT setval('projects_id_seq', COALESCE((SELECT MAX(id) FROM projects), 1), true);
 SELECT setval('steps_id_seq', COALESCE((SELECT MAX(id) FROM steps), 1), true);
 
--- ============================================
 -- Seed completed!
--- ============================================
--- Users: 16 (1 admin initial + 2 admins + 3 teachers + 10 students)
--- Classes: 4
--- Courses: 6
--- Skills: 15
--- Projects: 5
--- Steps: 14
--- Validations: 12 (various statuses)
--- passwords: Password123

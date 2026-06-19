@@ -1,9 +1,11 @@
 %%mocodo
 
 :
-AUTHENTIFICATION: id, email, mdp, #id_fiche_utilisateur > FICHE_UTILISATEUR > id
 :
-FICHE_UTILISATEUR: id, nom, prenom, type_utilisateur, photo_profil, actif
+:
+IDENTIFIANT: id, email, mdp, _#id_compte > COMPTE > id
+:
+:
 :
 VALIDATE: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_competence > COMPETENCE > id, statut
 :
@@ -13,11 +15,13 @@ ETAPE_COMPETENCE: #id_etape > ETAPE > id, _#id_competence > COMPETENCE > id
 :
 
 :
-REFRESH_TOKENS: token, date_expiration, #id_authentification > AUTHENTIFICATION > id
+IDENTIFIANT_OAUTH: id, fournisseur, oauth_id, #id_compte > COMPTE > id
 :
-CLASSE_UTILISATEUR: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_classe > CLASSE > id
+COMPTE: id, email,
 :
-COURS_UTILISATEUR: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_cours > COURS > id
+FICHE_UTILISATEUR_COMPTE: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_compte > COMPTE > id
+:
+FICHE_UTILISATEUR: id, nom, prenom, type_utilisateur, photo_profil, actif
 :
 COMPETENCE_COURS: #id_cours > COURS > id, _#id_competence > COMPETENCE > id
 :
@@ -27,11 +31,27 @@ ETAPE: id, nom, description, #id_projet > PROJET > id
 :
 :
 :
-CLASSE: id, nom
+REFRESH_TOKENS: token, date_expiration, _#id_compte > COMPTE > id
 :
-COURS_CLASSE: #id_classe > CLASSE > id, _#id_cours > COURS > id
+CLASSE_UTILISATEUR: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_classe > CLASSE > id
+:
+COURS_UTILISATEUR: #id_fiche_utilisateur > FICHE_UTILISATEUR > id, _#id_cours > COURS > id
 :
 COURS: id, nom, description
 :
 PROJET: id, nom, description, #id_cours > COURS > id
+:
+
+:
+:
+:
+:
+:
+:
+:
+CLASSE: id, nom
+:
+COURS_CLASSE: #id_classe > CLASSE > id, _#id_cours > COURS > id
+:
+:
 :

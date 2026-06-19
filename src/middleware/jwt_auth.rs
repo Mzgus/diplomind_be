@@ -54,7 +54,7 @@ impl<E: Endpoint> Endpoint for JwtAuthEndpoint<E> {
         .map_err(|_| MyError::TokenExpired)?; // Use our custom error
 
         // Check if user is active (not deactivated by admin)
-        if !token_data.claims.user.user_active.unwrap_or(true) {
+        if !token_data.claims.user.user_active {
             return Err(MyError::Unauthorized.into());
         }
 

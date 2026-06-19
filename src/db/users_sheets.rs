@@ -8,15 +8,24 @@ pub async fn create_user_sheet<'e>(
 ) -> Result<UserSheet, MyError> {
     let query = sqlx::query_as(
         r#"
-        INSERT INTO "users_sheets" ("last_name", "first_name", "type_user", "profile_picture")
-        VALUES ($1, $2, $3, $4)
-        RETURNING *
+        WITH inserted_sheet AS (
+            INSERT INTO "users_sheets" ("last_name", "first_name", "type_user", "profile_picture")
+            VALUES ($1, $2, $3, $4)
+            RETURNING *
+        ),
+        inserted_link AS (
+            INSERT INTO "accounts_users_sheets" ("account_id", "user_sheet_id")
+            SELECT $5, id FROM inserted_sheet
+            WHERE $5 IS NOT NULL
+        )
+        SELECT * FROM inserted_sheet
         "#,
     )
     .bind(&data.last_name)
     .bind(&data.first_name)
     .bind(&data.type_user)
-    .bind(&data.profile_picture);
+    .bind(&data.profile_picture)
+    .bind(data.account_id);
 
     let user_sheet: UserSheet = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error creating user sheet: {:?}", err);
@@ -99,6 +108,11 @@ pub async fn update_user_sheet<'e>(
         param_count += 1;
     }
 
+    if data.active.is_some() {
+        query_parts.push(format!("\"active\" = ${}", param_count));
+        param_count += 1;
+    }
+
     if query_parts.is_empty() {
         return Err(MyError::DBErrors {
             entity: "No fields to update",
@@ -125,13 +139,19 @@ pub async fn update_user_sheet<'e>(
     if let Some(profile_picture) = data.profile_picture {
         query = query.bind(profile_picture);
     }
+    if let Some(active) = data.active {
+        query = query.bind(active);
+    }
     query = query.bind(id);
 
     let user_sheet: UserSheet = query
         .fetch_one(executor)
         .await
-        .map_err(|_| MyError::DBErrors {
-            entity: "Failed to update user sheet",
+        .map_err(|err| {
+            eprintln!("Error updating user sheet: {:?}", err);
+            MyError::DBErrors {
+                entity: "Failed to update user sheet",
+            }
         })?;
 
     Ok(user_sheet)
@@ -186,4 +206,54 @@ pub async fn set_user_active_status<'e>(
         })?;
 
     Ok(user_sheet)
+}
+
+/// Link an account to a user sheet (for associating existing sheets with accounts)
+pub async fn link_account_to_sheet<'e>(
+    executor: impl PgExecutor<'e>,
+    account_id: i32,
+    user_sheet_id: i32,
+) -> Result<(), MyError> {
+    // Use INSERT ... ON CONFLICT DO NOTHING to avoid duplicates
+    let query = sqlx::query(
+        r#"
+        INSERT INTO "accounts_users_sheets" ("account_id", "user_sheet_id")
+        VALUES ($1, $2)
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .bind(account_id)
+    .bind(user_sheet_id);
+
+    query.execute(executor).await.map_err(|err| {
+        eprintln!("Error linking account to sheet: {:?}", err);
+        MyError::DBErrors {
+            entity: "Failed to link account to sheet",
+        }
+    })?;
+
+    Ok(())
+}
+
+/// Dissociate a user sheet from its account
+pub async fn unlink_account_from_sheet<'e>(
+    executor: impl PgExecutor<'e>,
+    user_sheet_id: i32,
+) -> Result<(), MyError> {
+    let query = sqlx::query(
+        r#"
+        DELETE FROM "accounts_users_sheets"
+        WHERE "user_sheet_id" = $1
+        "#
+    )
+    .bind(user_sheet_id);
+
+    query.execute(executor).await.map_err(|err| {
+        eprintln!("Error unlinking sheet from account: {:?}", err);
+        MyError::DBErrors {
+            entity: "Failed to unlink sheet from account",
+        }
+    })?;
+
+    Ok(())
 }

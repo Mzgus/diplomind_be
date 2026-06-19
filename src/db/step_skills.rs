@@ -19,12 +19,12 @@ pub async fn link_skill_to_step<'e>(
     let step_skill: StepSkill = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error linking skill to step: {:?}", err);
 
-        if let sqlx::Error::Database(db_err) = &err
-            && db_err.is_unique_violation()
-        {
-            return MyError::AlreadyExists {
-                entity: "Step-Skill association",
-            };
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "Step-Skill association",
+                };
+            }
         }
 
         MyError::DBErrors {
@@ -39,46 +39,48 @@ pub async fn link_skill_to_step<'e>(
 pub async fn get_step_skills<'e>(
     executor: impl PgExecutor<'e>,
     step_id: i32,
-) -> Result<Vec<StepSkill>, MyError> {
+) -> Result<Vec<crate::models::skills::Skill>, MyError> {
     let query = sqlx::query_as(
         r#"
-        SELECT * FROM "step_skills"
-        WHERE "step_id" = $1
+        SELECT s.* FROM "skills" s
+        JOIN "step_skills" ss ON s.id = ss.skill_id
+        WHERE ss.step_id = $1
         "#,
     )
     .bind(step_id);
 
-    let step_skills: Vec<StepSkill> = query.fetch_all(executor).await.map_err(|err| {
+    let skills: Vec<crate::models::skills::Skill> = query.fetch_all(executor).await.map_err(|err| {
         eprintln!("Error fetching step skills: {:?}", err);
         MyError::DBErrors {
             entity: "Failed to fetch step skills",
         }
     })?;
 
-    Ok(step_skills)
+    Ok(skills)
 }
 
 /// Get all steps for a skill
 pub async fn get_skill_steps<'e>(
     executor: impl PgExecutor<'e>,
     skill_id: i32,
-) -> Result<Vec<StepSkill>, MyError> {
+) -> Result<Vec<crate::models::steps::Step>, MyError> {
     let query = sqlx::query_as(
         r#"
-        SELECT * FROM "step_skills"
-        WHERE "skill_id" = $1
+        SELECT st.* FROM "steps" st
+        JOIN "step_skills" ss ON st.id = ss.step_id
+        WHERE ss.skill_id = $1
         "#,
     )
     .bind(skill_id);
 
-    let skill_steps: Vec<StepSkill> = query.fetch_all(executor).await.map_err(|err| {
+    let steps: Vec<crate::models::steps::Step> = query.fetch_all(executor).await.map_err(|err| {
         eprintln!("Error fetching skill steps: {:?}", err);
         MyError::DBErrors {
             entity: "Failed to fetch skill steps",
         }
     })?;
 
-    Ok(skill_steps)
+    Ok(steps)
 }
 
 /// Unlink a skill from a step

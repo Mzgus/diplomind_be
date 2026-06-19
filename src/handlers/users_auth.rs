@@ -34,7 +34,27 @@ pub async fn create_user_auth(
         .to_string();
 
     // Replace plain password with hashed version
+    // Replace plain password with hashed version
     data.pwd = password_hash;
+
+    // Auto-create Account if not provided
+    if data.account_id.is_none() {
+        // Try to create an account with this email
+        // If it exists, this will likely fail with a Unique constraint error,
+        // which implies the user should probably be linking to the existing account instead.
+        let account_data = crate::models::accounts::CreateAccount {
+             email: data.email.clone(),
+        };
+        let account = db::accounts::create_account(pool, account_data).await.map_err(|e| {
+             // Map DB error to something user-friendly if needed, or let typical DB error flow
+             // Typically "AlreadyExists" if email taken
+             match e {
+                 MyError::DBErrors { .. } => MyError::AlreadyExists { entity: "Account (Email)" },
+                 _ => e,
+             }
+        })?;
+        data.account_id = Some(account.id);
+    }
 
     let user_auth = db::users_auth::create_user_auth(pool, data).await?;
     Ok(Json(user_auth))

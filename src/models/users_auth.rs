@@ -7,7 +7,7 @@ pub struct UserAuthRecord {
     pub id: i32,
     pub email: String,
     pub pwd: String,
-    pub id_user_sheet: i32,
+    pub account_id: i32,
 }
 
 /// Data required to create a new user auth record
@@ -15,7 +15,7 @@ pub struct UserAuthRecord {
 pub struct CreateUserAuth {
     pub email: String,
     pub pwd: String,
-    pub id_user_sheet: i32,
+    pub account_id: Option<i32>,
 }
 
 /// Data for updating user auth email

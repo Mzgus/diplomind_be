@@ -1,7 +1,9 @@
 pub mod auth;
+pub mod accounts;
 pub mod users_auth;
 pub mod users_sheets;
 pub use auth::*;
+pub use accounts::*;
 pub use users_auth::*;
 pub use users_sheets::*;
 pub mod pagination;

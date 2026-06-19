@@ -22,9 +22,9 @@ pub async fn get_course_skills(
     Data(pool): Data<&Pool<Postgres>>,
     Path(course_id): Path<i32>,
     _auth_user: AuthUser,
-) -> Result<Json<Vec<CourseSkill>>, MyError> {
-    let course_skills = db::course_skills::get_course_skills(pool, course_id).await?;
-    Ok(Json(course_skills))
+) -> Result<Json<Vec<crate::models::skills::Skill>>, MyError> {
+    let skills = db::course_skills::get_course_skills(pool, course_id).await?;
+    Ok(Json(skills))
 }
 
 /// Get all courses for a skill
@@ -33,9 +33,9 @@ pub async fn get_skill_courses(
     Data(pool): Data<&Pool<Postgres>>,
     Path(skill_id): Path<i32>,
     _auth_user: AuthUser,
-) -> Result<Json<Vec<CourseSkill>>, MyError> {
-    let skill_courses = db::course_skills::get_skill_courses(pool, skill_id).await?;
-    Ok(Json(skill_courses))
+) -> Result<Json<Vec<crate::models::courses::Course>>, MyError> {
+    let courses = db::course_skills::get_skill_courses(pool, skill_id).await?;
+    Ok(Json(courses))
 }
 
 /// Unlink a skill from a course (admin/teacher)

@@ -20,12 +20,12 @@ pub async fn link_course_to_class<'e>(
         eprintln!("Error linking course to class: {:?}", err);
 
         // Check if it's a unique constraint violation
-        if let sqlx::Error::Database(db_err) = &err
-            && db_err.is_unique_violation()
-        {
-            return MyError::AlreadyExists {
-                entity: "Course-Class association",
-            };
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "Course-Class association",
+                };
+            }
         }
 
         MyError::DBErrors {

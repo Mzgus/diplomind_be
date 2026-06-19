@@ -19,12 +19,12 @@ pub async fn assign_user_to_class<'e>(
     let user_class: UserClass = query.fetch_one(executor).await.map_err(|err| {
         eprintln!("Error assigning user to class: {:?}", err);
 
-        if let sqlx::Error::Database(db_err) = &err
-            && db_err.is_unique_violation()
-        {
-            return MyError::AlreadyExists {
-                entity: "User-Class association",
-            };
+        if let sqlx::Error::Database(db_err) = &err {
+            if db_err.is_unique_violation() {
+                return MyError::AlreadyExists {
+                    entity: "User-Class association",
+                };
+            }
         }
 
         MyError::DBErrors {
@@ -39,46 +39,48 @@ pub async fn assign_user_to_class<'e>(
 pub async fn get_user_classes<'e>(
     executor: impl PgExecutor<'e>,
     user_id: i32,
-) -> Result<Vec<UserClass>, MyError> {
+) -> Result<Vec<crate::models::classes::Class>, MyError> {
     let query = sqlx::query_as(
         r#"
-        SELECT * FROM "user_classes"
-        WHERE "user_id" = $1
+        SELECT c.* FROM "classes" c
+        JOIN "user_classes" uc ON c.id = uc.class_id
+        WHERE uc.user_id = $1
         "#,
     )
     .bind(user_id);
 
-    let user_classes: Vec<UserClass> = query.fetch_all(executor).await.map_err(|err| {
+    let classes: Vec<crate::models::classes::Class> = query.fetch_all(executor).await.map_err(|err| {
         eprintln!("Error fetching user classes: {:?}", err);
         MyError::DBErrors {
             entity: "Failed to fetch user classes",
         }
     })?;
 
-    Ok(user_classes)
+    Ok(classes)
 }
 
 /// Get all users in a class
 pub async fn get_class_users<'e>(
     executor: impl PgExecutor<'e>,
     class_id: i32,
-) -> Result<Vec<UserClass>, MyError> {
+) -> Result<Vec<crate::models::users_sheets::UserSheet>, MyError> {
     let query = sqlx::query_as(
         r#"
-        SELECT * FROM "user_classes"
-        WHERE "class_id" = $1
+        SELECT us.* FROM "users_sheets" us
+        JOIN "user_classes" uc ON us.id = uc.user_id
+        WHERE uc.class_id = $1
         "#,
     )
     .bind(class_id);
 
-    let class_users: Vec<UserClass> = query.fetch_all(executor).await.map_err(|err| {
+    let users: Vec<crate::models::users_sheets::UserSheet> = query.fetch_all(executor).await.map_err(|err| {
         eprintln!("Error fetching class users: {:?}", err);
         MyError::DBErrors {
             entity: "Failed to fetch class users",
         }
     })?;
 
-    Ok(class_users)
+    Ok(users)
 }
 
 /// Remove a user from a class
