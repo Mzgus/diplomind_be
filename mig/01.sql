@@ -220,3 +220,12 @@ CREATE INDEX IF NOT EXISTS idx_course_skills_skill ON course_skills(skill_id);
 -- Step Skills
 CREATE INDEX IF NOT EXISTS idx_step_skills_step ON step_skills(step_id);
 CREATE INDEX IF NOT EXISTS idx_step_skills_skill ON step_skills(skill_id);
+
+-- ============================================
+-- 5. Data insertion basic admin
+-- ============================================
+
+INSERT INTO accounts (email) VALUES ('admin@diplomind.fr');
+INSERT INTO users_sheets (last_name, first_name, type_user, profile_picture, active) VALUES ('Admin', 'Admin', 'admin', '', TRUE);
+INSERT INTO users_auth (email, pwd, account_id) VALUES ('admin@diplomind.fr', '$argon2id$v=19$m=19456,t=2,p=1$GhcmbW6yjuETRE7GbhZz6A$HmwWF+GRl3vD0A2+7RuDkCcCGqUwblOtKJoEJI7/sSI', 1);
+INSERT INTO accounts_users_sheets (account_id, user_sheet_id) VALUES (1, 1);
